@@ -1,6 +1,6 @@
 # Light
 
-![Python workflow badge](https://github.com/earik87/light/actions/workflows/python-app.yml/badge.svg)
+![Python workflow badge](https://github.com/earik87/light/actions/workflows/python-app.yml/badge.svg?event=push)
 
 Light is a data acquisition application for THz-TDS Instrument [in LSG group](https://users.metu.edu.tr/eokan/index.html). It is a fork of another [project](https://github.com/cbuhl/THzInstrumentControl). Why we create a new one? Because the instruments to be controlled are different (lockin SR830 and thorlabs lts150/m). Plus, we will try to use software development practices here as much as possible. 
 
