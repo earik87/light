@@ -214,7 +214,7 @@ class thzWindow(QMainWindow):
         self.update_statusbar('Goto value reached')
 
     def btnUpdate_clicked(self):
-        self.update_statusbar('Updating LIA')
+        self.update_statusbar('Updating Lockin')
         #Update sensitivity
         selected_sens = self.ddSens.currentIndex()
         #print('Sensitivity: '+str(selected_sens))

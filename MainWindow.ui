@@ -219,7 +219,7 @@
        <item row="2" column="4">
         <widget class="QLabel" name="label_6">
          <property name="text">
-          <string>Full scale</string>
+          <string>Sensitivity</string>
          </property>
         </widget>
        </item>
@@ -456,7 +456,7 @@
        <item row="5" column="5">
         <widget class="QPushButton" name="btnUpdate">
          <property name="text">
-          <string>Update LIA</string>
+          <string>Update Lockin Parameters</string>
          </property>
         </widget>
        </item>
