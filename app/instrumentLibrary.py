@@ -10,13 +10,23 @@ class SR830demo():
         self.datasetY = np.cos(np.linspace(0, 10*np.pi, 2500))
         self.dataN = 0
 
+        thzDemoData = ThzDemoData()
+
+        self.time = thzDemoData.get_time()
+        self.voltage = thzDemoData.get_voltage()
+        self.length_of_scan = thzDemoData.get_length_of_scan()
+
+        print("Printing time data", self.time)
+        print("Printing voltage data", self.voltage)
+
     def connect(self):
         print('DEMO LIA: connect')
 
     def measure(self):
-        measurement = (self.datasetX[self.dataN], self.datasetY[self.dataN])
+        measurement = (self.time[self.dataN], self.voltage[self.dataN])
         self.dataN = self.dataN + 1
-        sleep(0.002)
+        sleep(0.00001)
+        print("Measurement is: ", measurement)
         return measurement
 
     def demo_measure_reset(self):
@@ -45,6 +55,30 @@ class SR830demo():
         print('DEMO LIA: Setting up the standard parameters')
 
 
+class ThzDemoData:
+    def __init__(self):
+        # Step 1: Read the Data
+        with open("app/thz-tds-data.txt", "r") as file:
+            data = file.readlines()
+
+        # Step 2: Parse the Data
+        self.time = []
+        self.voltage = []
+        for line in data:
+            t, v = line.split()
+            self.time.append(float(t))
+            self.voltage.append(float(v))
+
+        self.length_of_scan = len(self.time)
+
+    def get_time(self):
+        return self.time
+    
+    def get_voltage(self):
+        return self.voltage
+
+    def get_length_of_scan(self):
+        return self.length_of_scan
 
 class SR830:
     def __init__(self, port, baudrate):

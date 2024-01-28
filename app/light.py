@@ -101,6 +101,7 @@ class thzWindow(QMainWindow):
         ##           Define signals and slots for buttons                     ##
         ########################################################################
         self.btnStart.clicked.connect(self.btnStart_clicked)
+        self.btnStartDemo.clicked.connect(self.btnStartDemo_clicked)
         self.btnStop.clicked.connect(self.btnStop_clicked)
         self.btnRealtime.clicked.connect(self.btnRealtime_clicked)
         self.btnGoto.clicked.connect(self.btnGoto_clicked)
@@ -147,6 +148,62 @@ class thzWindow(QMainWindow):
             self.dataX = np.append(self.dataX, measurement[0])
             self.dataY = np.append(self.dataY, measurement[1])
             self.dataStep = np.append(self.dataStep, self.PresentPosition)
+
+            #Increment the PresentPosition controller variable
+            self.PresentPosition = self.PresentPosition + self.nStepsize.value()
+
+            #Execute move start
+            self.stage.move(self.PresentPosition)
+
+            #Execute post move wait
+            self.interruptable_sleep(self.post_move_wait_time)
+
+            #Update plot
+            self.update_plot()
+
+            #every n datapoints save the data
+        #plt.pause(0.0001)
+
+        self.save_data_array()
+
+    def btnStartDemo_clicked(self):
+        try:
+            self.lia.demo_measure_reset() #should be removed when out of dev
+        except AttributeError:
+            pass
+        self.update_statusbar('Starting scan')
+        self.reset_data_array()
+        self.StopRunFlag = False
+        self.SaveOnStop = False #It defaults to the end of the loop where it saves, anyway.
+
+        self.generate_plot()
+        # update step point
+        self.PresentPosition = self.nStart.value()
+        # goto start of scan range
+
+        #self.stage.move(self.PresentPosition)
+        # wait for stage controller to arrive
+
+
+        #loop through n steps:
+        length_of_scan = self.lia.length_of_scan
+        for i in range(length_of_scan):
+
+            #Check for stop flag
+            if self.StopRunFlag == True:
+                break
+
+            # Measure data
+            measurement = self.high_level_measure()
+
+            #append data to dataarray
+            self.dataX = np.append(self.dataX, measurement[0])
+            self.dataY = np.append(self.dataY, measurement[1])
+            self.dataStep = np.append(self.dataStep, self.PresentPosition)
+
+            time = self.dataX
+            volt = self.dataY
+            step = self.dataStep
 
             #Increment the PresentPosition controller variable
             self.PresentPosition = self.PresentPosition + self.nStepsize.value()
@@ -320,39 +377,34 @@ class thzWindow(QMainWindow):
         # discards the old graph
         self.ax.clear()
 
-        self.lineX, = self.ax.plot(self.dataStep, self.dataX)
-        self.lineY, = self.ax.plot(self.dataStep, self.dataY)
+        self.lineX, = self.ax.plot(self.dataX, self.dataY)
+        # self.lineY, = self.ax.plot(self.dataStep, self.dataY)
 
         self.ax.set_xlim([self.nStart.value(), self.nStop.value()])
 
         # refresh canvas
-        #self.canvas.draw()
+        self.canvas.draw()
 
     def update_plot(self):
-        self.lineX.set_xdata(self.dataStep)
-        self.lineY.set_xdata(self.dataStep)
+        self.lineX.set_xdata(self.dataX)
+        # self.lineY.set_xdata(self.dataStep)
 
-        self.lineX.set_ydata(self.dataX)
-        self.lineY.set_ydata(self.dataY)
-
+        # self.lineX.set_ydata(self.dataX)
+        self.lineX.set_ydata(self.dataY)
+        print("self.lineX printing;", self.lineX)
         #Crop the axis
-        y_min = np.min([self.dataX, self.dataY])
-        y_max = np.max([self.dataX, self.dataY])
-        diff = y_max - y_min
-        self.ax.set_ylim([y_min-diff*0.1, y_max+diff*0.1])
+        # y_min = np.min([self.dataX, self.dataY])
+        # y_max = np.max([self.dataX, self.dataY])
+        # diff = y_max - y_min
+        self.ax.set_ylim([-0.001, 0.0022])
+        self.ax.set_xlim(-194, -179)
 
         self.canvas.draw()
         self.canvas.flush_events()
         if os.name == 'posix':
             plt.pause(0.000001)
 
-
-
-
-
 app = QApplication(sys.argv)
 widget = thzWindow()
-
 widget.show()
-
 sys.exit(app.exec_())
