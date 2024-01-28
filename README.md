@@ -6,6 +6,11 @@ Light is a data acquisition application for THz-TDS Instrument [in LSG group](ht
 
 Note that this project is not in-use, yet and still under-development!
 
+## Requirements
+- Python 3.12.1
+- Pip
+- Virtualenv
+
 ## Installation
 
 After cloning, create a virtual environment and install the requirements. For Linux and Mac users:
