@@ -174,6 +174,11 @@ class thzWindow(QMainWindow):
 
         #loop through n steps:
         length_of_scan = self.lia.length_of_scan
+        self.voltage_min = self.lia.voltage_min
+        self.voltage_max = self.lia.voltage_max
+        self.time_min = self.lia.time_min
+        self.time_max = self.lia.time_max
+
         self.update_statusbar('Starting scan')
         self.reset_data_array()
         self.StopRunFlag = False
@@ -187,7 +192,7 @@ class thzWindow(QMainWindow):
         #self.stage.move(self.PresentPosition)
         # wait for stage controller to arrive
 
-        for i in range(length_of_scan):
+        for i in range(length_of_scan-1):
 
             #Check for stop flag
             if self.StopRunFlag == True:
@@ -260,7 +265,6 @@ class thzWindow(QMainWindow):
 
         self.lia.send('I 0')
 
-
     def btnGoto_clicked(self):
         self.update_statusbar('Starting Goto')
         self.stage.move(self.nPosition.value())
@@ -276,7 +280,6 @@ class thzWindow(QMainWindow):
         selected_tc = 10-self.ddTc.currentIndex()
         #print('Time constant: '+str(selected_tc))
         self.lia.set_tc(selected_tc)
-
 
     ############################################################################
     ##           Define update, save and time calc functions                  ##
@@ -360,7 +363,6 @@ class thzWindow(QMainWindow):
             pd.DataFrame(np.array([self.dataX, self.dataY, self.dataStep]).T,
              columns=['X', 'Y', 'step']  ).to_csv(fname_string)
 
-
     ############################################################################
     ##           Define plotting and plot update functions                    ##
     ############################################################################
@@ -375,7 +377,10 @@ class thzWindow(QMainWindow):
 
         self.lineX, = self.ax.plot(self.dataX, self.dataY)
 
-        self.ax.set_xlim([self.nStart.value(), self.nStop.value()])
+        #Crop the axis
+        #TODO: These limits should be defined from THz data.
+        self.ax.set_ylim(self.voltage_min, self.voltage_max)
+        self.ax.set_xlim(self.time_min, self.time_max)
 
         # refresh canvas
         self.canvas.draw()
@@ -383,11 +388,6 @@ class thzWindow(QMainWindow):
     def update_plot(self):
         self.lineX.set_xdata(self.dataX)
         self.lineX.set_ydata(self.dataY)
-
-        #Crop the axis
-        #TODO: These limits should be defined from THz data.
-        self.ax.set_ylim([-0.001, 0.0022])
-        self.ax.set_xlim(-194, -179)
 
         self.canvas.draw()
         self.canvas.flush_events()

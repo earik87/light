@@ -14,6 +14,8 @@ class SR830demo():
         self.time = thzDemoData.get_time()
         self.voltage = thzDemoData.get_voltage()
         self.length_of_scan = thzDemoData.get_length_of_scan()
+        self.voltage_min, self.voltage_max = thzDemoData.get_min_max_voltage()
+        self.time_min, self.time_max = thzDemoData.get_min_max_time()
 
     def connect(self):
         print('DEMO LIA: connect')
@@ -75,6 +77,12 @@ class ThzDemoData:
 
     def get_length_of_scan(self):
         return self.length_of_scan
+    
+    def get_min_max_voltage(self):
+        return min(self.voltage), max(self.voltage)
+
+    def get_min_max_time(self):
+        return min(self.time), max(self.time)
 
 class SR830:
     def __init__(self, port, baudrate):
