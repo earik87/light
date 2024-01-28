@@ -11,13 +11,9 @@ class SR830demo():
         self.dataN = 0
 
         thzDemoData = ThzDemoData()
-
         self.time = thzDemoData.get_time()
         self.voltage = thzDemoData.get_voltage()
         self.length_of_scan = thzDemoData.get_length_of_scan()
-
-        print("Printing time data", self.time)
-        print("Printing voltage data", self.voltage)
 
     def connect(self):
         print('DEMO LIA: connect')
