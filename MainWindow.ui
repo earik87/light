@@ -71,7 +71,7 @@
        <item row="1" column="2">
         <widget class="QPushButton" name="btnStop">
          <property name="text">
-          <string>Stop</string>
+          <string>Stop Scan</string>
          </property>
          <property name="autoDefault">
           <bool>false</bool>
@@ -81,7 +81,7 @@
        <item row="2" column="0">
         <widget class="QLabel" name="label_3">
          <property name="text">
-          <string>Step size</string>
+          <string>Stage Step size(μm)</string>
          </property>
         </widget>
        </item>
@@ -102,26 +102,7 @@
        <item row="0" column="2">
         <widget class="QPushButton" name="btnStart">
          <property name="text">
-          <string notr="true">Start</string>
-         </property>
-         <property name="shortcut">
-          <string notr="true"/>
-         </property>
-         <property name="autoDefault">
-          <bool>false</bool>
-         </property>
-         <property name="default">
-          <bool>false</bool>
-         </property>
-         <property name="flat">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-        <item row="0" column="3">
-        <widget class="QPushButton" name="btnStartDemo">
-         <property name="text">
-          <string notr="true">StartDemo</string>
+          <string notr="true">Start Scan</string>
          </property>
          <property name="shortcut">
           <string notr="true"/>
@@ -150,7 +131,7 @@
        <item row="1" column="0">
         <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>Stop</string>
+          <string>Stage Stop(μm)</string>
          </property>
         </widget>
        </item>
@@ -170,14 +151,14 @@
        <item row="0" column="1">
         <widget class="QSpinBox" name="nStart">
          <property name="maximum">
-          <number>500000</number>
+          <number>150000</number>
          </property>
         </widget>
        </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label">
          <property name="text">
-          <string>Start</string>
+          <string>Stage Start(μm)</string>
          </property>
         </widget>
        </item>
@@ -197,7 +178,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="label_4">
          <property name="text">
-          <string>Position</string>
+          <string>Stage Position</string>
          </property>
         </widget>
        </item>
@@ -251,7 +232,7 @@
           <number>500</number>
          </property>
          <property name="value">
-          <number>69</number>
+          <number>100</number>
          </property>
         </widget>
        </item>
@@ -356,7 +337,7 @@
           <number>500000</number>
          </property>
          <property name="value">
-          <number>300000</number>
+          <number>3000</number>
          </property>
         </widget>
        </item>
