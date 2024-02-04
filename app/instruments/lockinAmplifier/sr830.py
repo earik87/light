@@ -1,3 +1,4 @@
+import random
 import serial
 import numpy as np
 from time import sleep
@@ -48,19 +49,8 @@ class LockinAmplifierBaseClass(ABC):
 
 class SR830demo(LockinAmplifierBaseClass):
     def __init__(self, port, baudrate):
-        self.datasetX = np.sin(np.linspace(0, 10*np.pi, 2500))
-        self.datasetY = np.cos(np.linspace(0, 10*np.pi, 2500))
-        self.dataN = 0
-
         self.timeConstant = 0
         self.sensitivity = 0
-
-        thzDemoData = _ThzDemoData()
-        self.time = thzDemoData.get_time()
-        self.voltage = thzDemoData.get_voltage()
-        self.length_of_scan = thzDemoData.get_length_of_scan()
-        self.voltage_min, self.voltage_max = thzDemoData.get_min_max_voltage()
-        self.time_min, self.time_max = thzDemoData.get_min_max_time()
 
     def openConnection(self):
         print('DEMO SR830 is connected')
@@ -71,12 +61,14 @@ class SR830demo(LockinAmplifierBaseClass):
     def flush(self):
         print('DEMO SR830: flushing serial comms')
 
-    def measure(self) -> tuple:
-        measurement = (self.time[self.dataN], self.voltage[self.dataN])
-        self.dataN = self.dataN + 1
+    def measure(self) -> int:
+        lower_limit = 0  
+        upper_limit = 10 
+        random_number = random.uniform(lower_limit, upper_limit)
+
         sleep(0.00001)
-        print("Measurement is: ", measurement)
-        return measurement
+        print("Measurement is: ", random_number)
+        return random_number
 
     def setTimeConstant(self, timeConstant):
         self.timeConstant = timeConstant
@@ -235,35 +227,3 @@ class SR830:
         # Disengage both line notch filters.
         self.send('L1,0')
         self.send('L2,0')
-
-class _ThzDemoData:
-    def __init__(self):
-        
-        # Step 1: Read the Data
-        with open("app/thz-tds-data.txt", "r") as file:
-            data = file.readlines()
-
-        # Step 2: Parse the Data
-        self.time = []
-        self.voltage = []
-        for line in data:
-            t, v = line.split()
-            self.time.append(float(t))
-            self.voltage.append(float(v))
-
-        self.length_of_scan = len(self.time)
-
-    def get_time(self):
-        return self.time
-    
-    def get_voltage(self):
-        return self.voltage
-
-    def get_length_of_scan(self):
-        return self.length_of_scan
-    
-    def get_min_max_voltage(self):
-        return min(self.voltage), max(self.voltage)
-
-    def get_min_max_time(self):
-        return min(self.time), max(self.time)

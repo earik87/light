@@ -109,12 +109,11 @@ class LightUIWindow(QMainWindow):
         except AttributeError:
             pass
 
-        # loop through n steps:
-        length_of_scan = self.lia.length_of_scan
-        self.voltage_min = self.lia.voltage_min
-        self.voltage_max = self.lia.voltage_max
-        self.time_min = self.lia.time_min
-        self.time_max = self.lia.time_max
+        length_of_scan = int(((self.nStop.value() - self.nStart.value())/self.nStepsize.value()) + 1)
+        self.voltage_min = 0
+        self.voltage_max = 10
+        self.time_min = self.nStart.value()
+        self.time_max = self.nStop.value()
 
         self.update_statusbar('Starting scan')
         self.reset_data_array()
@@ -130,18 +129,18 @@ class LightUIWindow(QMainWindow):
 
         # wait for stage controller to arrive
 
-        for i in range(length_of_scan-1):
+        for i in range(length_of_scan):
 
             # Check for stop flag
             if self.StopRunFlag == True:
                 break
 
             # Measure data
-            measurement = self.high_level_measure()
+            voltageValue = self.measureVoltage()
 
             # append data to dataarray
-            self.dataX = np.append(self.dataX, measurement[0])
-            self.dataY = np.append(self.dataY, measurement[1])
+            self.dataX = np.append(self.dataX, self.PresentPosition)
+            self.dataY = np.append(self.dataY, voltageValue)
             self.dataStep = np.append(self.dataStep, self.PresentPosition)
 
             # Increment the PresentPosition controller variable
@@ -155,9 +154,6 @@ class LightUIWindow(QMainWindow):
 
             # Update plot
             self.update_plot()
-
-            # every n datapoints save the data
-        # plt.pause(0.0001)
 
         self.save_data_array()
 
@@ -222,15 +218,13 @@ class LightUIWindow(QMainWindow):
         self.lia.setTimeConstant(selected_tc)
 
     # Define update, save and time calc functions
-    def high_level_measure(self):
-        dataX = []
+    def measureVoltage(self):
         dataY = []
         for i in range(int(self.nAvg.value())):
             single_measurement = self.lia.measure()
-            dataX.append(single_measurement[0])  # the x value
-            dataY.append(single_measurement[1])  # append the y value
+            dataY.append(single_measurement)
 
-        return (np.mean(dataX), np.mean(dataY))
+        return (np.mean(dataY))
 
     def update_statusbar(self, new_update):
         self.statusBar.setText('Status: '+new_update)
