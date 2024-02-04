@@ -1,88 +1,113 @@
 import serial
 import numpy as np
 from time import sleep
+from abc import ABC, abstractmethod
 
 
-class SR830demo():
-    def __init__(self, port, baudrate):
+class LockinAmplifierBaseClass(ABC):
+    @abstractmethod
+    def openConnection(self, port, baudrate):
         pass
+
+    @abstractmethod
+    def closeConnection(self):
+        pass
+
+    @abstractmethod
+    def flush(self):
+        pass
+
+    @abstractmethod
+    def measure(self):
+        pass
+
+    @abstractmethod
+    def send(self):
+        pass
+
+    @abstractmethod
+    def setParameter(self):
+        pass
+
+    @abstractmethod
+    def setTimeConstant(self):
+        pass
+
+    @abstractmethod
+    def setSensitivity(self):
+        pass
+
+    @abstractmethod
+    def getTimeConstant(self):
+        pass
+
+    @abstractmethod
+    def getSensitivity(self):
+        pass
+
+
+class SR830demo(LockinAmplifierBaseClass):
+    def __init__(self, port, baudrate):
         self.datasetX = np.sin(np.linspace(0, 10*np.pi, 2500))
         self.datasetY = np.cos(np.linspace(0, 10*np.pi, 2500))
         self.dataN = 0
 
-        thzDemoData = ThzDemoData()
+        self.timeConstant = 0
+        self.sensitivity = 0
+
+        thzDemoData = _ThzDemoData()
         self.time = thzDemoData.get_time()
         self.voltage = thzDemoData.get_voltage()
         self.length_of_scan = thzDemoData.get_length_of_scan()
         self.voltage_min, self.voltage_max = thzDemoData.get_min_max_voltage()
         self.time_min, self.time_max = thzDemoData.get_min_max_time()
 
-    def connect(self):
-        print('DEMO LIA: connect')
+    def openConnection(self):
+        print('DEMO SR830 is connected')
 
-    def measure(self):
+    def closeConnection(self):
+        print('DEMO SR830: closing connection')
+
+    def flush(self):
+        print('DEMO SR830: flushing serial comms')
+
+    def measure(self) -> tuple:
         measurement = (self.time[self.dataN], self.voltage[self.dataN])
         self.dataN = self.dataN + 1
         sleep(0.00001)
         print("Measurement is: ", measurement)
         return measurement
 
+    def setTimeConstant(self, timeConstant):
+        self.timeConstant = timeConstant
+        print('DEMO SR830: time constant is set to '+ str(self.timeConstant))
+
+    def setSensitivity(self, sensitivity):
+        self.sensitivity = sensitivity
+        print('DEMO SR830: sensitivity is set to ' + str(self.sensitivity))
+
+    def getTimeConstant(self):
+        print('DEMO SR830: time constant is set to ' + str(self.timeConstant))
+
+    def getSensitivity(self):
+        print('DEMO SR830: sensitivity is set to ' + str(self.sensitivity))
+
+    def setParameter(self, input_string):
+        print('DEMO SR830: send '+input_string)
+
     def demo_measure_reset(self):
         self.dataN = 0
 
     def query(self, input):
-        print('DEMO LIA: Query made with '+str(input)+', returning something')
+        print('DEMO SR830: Query made with ' +
+              str(input)+', returning something')
         return None
 
-    def set_tc(self, tc):
-        print('DEMO LIA: set_tc '+str(tc))
-
-    def set_sens(self, sens):
-        print('DEMO LIA: set_sens '+str(sens))
-
-    def send(self, input_string):
-        print('DEMO LIA: send '+input_string)
-
-    def close(self):
-        print('DEMO LIA: closing connection')
-
-    def flush(self):
-        print('DEMO LIA: flushing serial comms')
-
     def standard_setup(self):
-        print('DEMO LIA: Setting up the standard parameters')
+        print('DEMO SR830: Setting up the standard parameters')
 
-
-class ThzDemoData:
-    def __init__(self):
-        # Step 1: Read the Data
-        with open("app/thz-tds-data.txt", "r") as file:
-            data = file.readlines()
-
-        # Step 2: Parse the Data
-        self.time = []
-        self.voltage = []
-        for line in data:
-            t, v = line.split()
-            self.time.append(float(t))
-            self.voltage.append(float(v))
-
-        self.length_of_scan = len(self.time)
-
-    def get_time(self):
-        return self.time
-    
-    def get_voltage(self):
-        return self.voltage
-
-    def get_length_of_scan(self):
-        return self.length_of_scan
-    
-    def get_min_max_voltage(self):
-        return min(self.voltage), max(self.voltage)
-
-    def get_min_max_time(self):
-        return min(self.time), max(self.time)
+    def send(self):
+        print('DEMO SR830: Send')
 
 class SR830:
     def __init__(self, port, baudrate):
@@ -95,7 +120,6 @@ class SR830:
 
         #self.ser = self.connect()
         sleep(0.25)
-
 
     def connect(self):
         self.ser = serial.Serial(self.port, self.baudrate, timeout = 0.03)
@@ -131,7 +155,6 @@ class SR830:
         self.send('QY')
         Y = self.receive_float()
         return X,Y
-
 
     def set_tc(self, tc):
         TcList = ['T 1,1', #1  ms
@@ -213,91 +236,34 @@ class SR830:
         self.send('L1,0')
         self.send('L2,0')
 
-class ArduinoStageControllerDemo():
-    def __init__(self, port, baudrate):
-        print('DEMO stage controller instantiating')
+class _ThzDemoData:
+    def __init__(self):
+        
+        # Step 1: Read the Data
+        with open("app/thz-tds-data.txt", "r") as file:
+            data = file.readlines()
 
-    def connect(self):
-        print('DEMO stagecontroller connecting')
+        # Step 2: Parse the Data
+        self.time = []
+        self.voltage = []
+        for line in data:
+            t, v = line.split()
+            self.time.append(float(t))
+            self.voltage.append(float(v))
 
-    def initialize(self):
-        print('DEMO stagecontroller initialising and homing')
+        self.length_of_scan = len(self.time)
 
-    def move(self, pos):
-        print('DEMO stagecontroller is ordered to move to '+str(pos))
+    def get_time(self):
+        return self.time
+    
+    def get_voltage(self):
+        return self.voltage
 
-    def close(self):
-        pass
+    def get_length_of_scan(self):
+        return self.length_of_scan
+    
+    def get_min_max_voltage(self):
+        return min(self.voltage), max(self.voltage)
 
-    def wait_for_done(self):
-        sleep(0.1)
-
-    def read_string(self):
-        return 'string'
-
-
-class ArduinoStageController():
-
-    def __init__(self, port, baudrate):
-        self.port = port
-        self.baudrate = baudrate
-
-    def connect(self):
-        self.ser = serial.Serial(self.port, self.baudrate, timeout = 0.1)
-        sleep(1)
-
-        #run down the buffers initially
-        self.ser.write(b'query \r\n')
-        garbage = self.read_string()
-
-        self.ser.write(b'query \r\n')
-        output = self.read_string()
-
-        if output == 'alive\r\n':
-            print('Found arduino on port '+self.port)
-        else:
-            print('Arduino not found.')
-
-    def initialize(self):
-        self.ser.flush()
-        self.ser.write(b'init \r\n')    # Find ud af hvorfor der ikke er endelser paa i Peters udgave.
-        self.wait_for_done()
-
-    def move(self, x):
-        self.ser.write(b'go '+str(int(x)).encode()+'\r\n'.encode())
-        #print('move ordered')
-        self.wait_for_done()
-
-    def close(self):
-        self.ser.close()
-
-    def wait_for_done(self):
-        DONE_FOUND_FLAG = False
-        while not DONE_FOUND_FLAG:
-            string = ""
-            bytes_returned = 1
-            while bytes_returned > 0:
-                read_char = self.ser.read().decode()
-                bytes_returned = len(read_char)
-                string += read_char
-
-            if 'done' in string:
-                DONE_FOUND_FLAG = True
-
-            sleep(0.1)
-
-
-    def read_string(self):
-        string = ""
-        bytes_returned = 1
-        while bytes_returned > 0:
-            read_char = self.ser.read()
-            bytes_returned = len(read_char)
-            string += read_char.decode()
-        #print('read_string function: '+string)
-
-        return string
-
-
-class log_and_print:
-    pass
+    def get_min_max_time(self):
+        return min(self.time), max(self.time)
