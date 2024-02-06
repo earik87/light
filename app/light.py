@@ -20,7 +20,7 @@ class LightUIWindow(QMainWindow):
     def __init__(self):
         global activeProfile
         super(LightUIWindow, self).__init__()
-        loadUi('MainWindow.ui', self)
+        loadUi('app/MainWindow.ui', self)
         self.setWindowTitle('THz Scan GUI')
 
         # Check for os:
