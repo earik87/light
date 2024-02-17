@@ -16,6 +16,7 @@ from instruments.thorlabsStage.lts150m import ThorlabsStageControllerDemo, Thorl
 # If you do not use demo, then comment this line.
 activeProfile = 'demo'
 
+
 class LightUIWindow(QMainWindow):
     def __init__(self):
         global activeProfile
@@ -42,11 +43,9 @@ class LightUIWindow(QMainWindow):
         else:
             self.lia = SR830(portLIA, 19200)
             self.stage = ThorlabsStageController(portStage, 9600)
-        
+
         self.lia.openConnection()
         time.sleep(0.25)
-        #If one wants to activate standard_setup, then uncomment this line.
-        # self.lia.standard_setup() 
 
         self.stage.openConnection()
         self.stage.initialize()
@@ -55,16 +54,7 @@ class LightUIWindow(QMainWindow):
         self.ddSens.setCurrentIndex(18)
         self.ddTc.setCurrentIndex(7)
 
-        # Run basic sanity checks for the LIA connection
-        response = self.lia.query('W')
-        if response != [b'0\r']:
-            print('Error: Connection to LIA unsuccesful. Files will not be saved')
-            self.update_statusbar('CRITICAL: LIA connection not available!')
-            self.save_files = False
-        else:
-            self.save_files = True
-
-        ## Define execution control variables
+        # Define execution control variables
         self.StopRunFlag = False
         self.IsHomedFlag = False
         self.SaveAllFlag = False
@@ -92,15 +82,14 @@ class LightUIWindow(QMainWindow):
         self.verticalLayout.insertWidget(0, self.toolbar)
         self.verticalLayout.replaceWidget(self.wplot, self.canvas)
 
-        ## Define signals and slots for buttons
+        # Define signals and slots for buttons
         self.btnStart.clicked.connect(self.btnStart_clicked)
         self.btnStop.clicked.connect(self.btnStop_clicked)
-        self.btnRealtime.clicked.connect(self.btnRealtime_clicked)
         self.btnGoto.clicked.connect(self.btnGoto_clicked)
         self.btnUpdate.clicked.connect(self.btnUpdate_clicked)
         self.cbSaveall.stateChanged.connect(self.update_savestate)
 
-    ##Define button functions
+    # Define button functions
 
     def btnStart_clicked(self):
         try:
@@ -108,7 +97,8 @@ class LightUIWindow(QMainWindow):
         except AttributeError:
             pass
 
-        length_of_scan = int(((self.nStop.value() - self.nStart.value())/self.nStepsize.value()) + 1)
+        length_of_scan = int(
+            ((self.nStop.value() - self.nStart.value())/self.nStepsize.value()) + 1)
         self.voltage_min = 0
         self.voltage_max = 10
         self.time_min = self.nStart.value()
@@ -162,43 +152,6 @@ class LightUIWindow(QMainWindow):
         if self.SaveOnStop:
             self.save_data_array()
         self.lia.setParameter('I0')
-
-    def btnRealtime_clicked(self):
-        print("This function is not implemented yet")
-        # self.update_statusbar('Realtime display started')
-        # self.StopRunFlag = False
-        # # This measurement is made for alignment only, and will not be saved.
-        # self.SaveOnStop = False
-        # self.lia.send('I 1')
-
-        # # Initialize the data set to zeros and sweet nothings.
-        # self.dataX = np.zeros(200)
-        # self.dataY = np.copy(self.dataX)
-        # self.dataStep = np.arange(200)
-
-        # # Generate plot
-        # self.generate_plot()
-        # self.PresentPosition = 200
-
-        # # Loop until stop button is clicked:
-        # while not self.StopRunFlag:
-        #     # measure
-        #     measurement = self.high_level_measure()
-        #     # append data to dataarray
-        #     self.dataX = np.append(self.dataX, measurement[0])
-        #     self.dataY = np.append(self.dataY, measurement[1])
-        #     self.dataStep = np.append(self.dataStep, self.PresentPosition)
-        #     # Remove the first entry of the datafiles:
-        #     self.dataX = np.delete(self.dataX, 0)
-        #     self.dataY = np.delete(self.dataY, 0)
-        #     self.dataStep = np.delete(self.dataStep, 0)
-        #     # plot
-        #     self.ax.set_xlim([self.dataStep.min(), self.dataStep.max()])
-        #     self.update_plot()
-
-        #     self.PresentPosition = self.PresentPosition+1
-
-        # self.lia.send('I 0')
 
     def btnGoto_clicked(self):
         self.update_statusbar('Starting Goto')
@@ -282,16 +235,12 @@ class LightUIWindow(QMainWindow):
         prefix_string = self.fileprefix.text()
         working_directory = os.getcwd()+'/'
         datetime_string = time.strftime('%Y%m%d-%H-%M-%S_')
-        fname_string = working_directory+datetime_string+prefix_string+'.dat'
-        if self.save_files:
-            print('Saving file to '+fname_string)
-        else:
-            print('Files not saved, as no proper instrument is connected.')
+        fname_string = working_directory+datetime_string+prefix_string+'.txt'
 
-        # Leverage pandas to do the heavy lifting.
-        if self.save_files:
-            pd.DataFrame(np.array([self.dataX, self.dataY, self.dataStep]).T,
-                         columns=['X', 'Y', 'step']).to_csv(fname_string)
+        if self.SaveAllFlag:
+            print('Saving file to '+fname_string)
+            pd.DataFrame(np.array([self.dataX, self.dataY]).T,
+                         columns=['stagePos', 'Voltage']).to_csv(fname_string, index=False)
 
     # Define plotting and plot update functions
     def generate_plot(self):

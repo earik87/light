@@ -4,3 +4,5 @@
 **/._.DS_Store
 .pytest_cache
 __pycache__
+venv/
+*.txt
