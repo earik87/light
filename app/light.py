@@ -39,10 +39,10 @@ class LightUIWindow(QMainWindow):
         # Check if application runs in demo mode. Production mode is not tested yet!
         if activeProfile == 'demo':
             self.lia = SR830demo(portLIA, 19200)
-            self.stage = ThorlabsStageControllerDemo(portStage, 9600)
+            self.stage = ThorlabsStageControllerDemo(123456)
         else:
             self.lia = SR830(portLIA, 19200)
-            self.stage = ThorlabsStageController(portStage, 9600)
+            self.stage = ThorlabsStageController(123456)
 
         self.lia.openConnection()
         time.sleep(0.25)
