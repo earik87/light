@@ -235,40 +235,68 @@ class LightUIWindow(QMainWindow):
         prefix_string = self.fileprefix.text()
         working_directory = os.getcwd()+'/'
         datetime_string = time.strftime('%Y%m%d-%H-%M-%S_')
-        fname_string = working_directory+datetime_string+prefix_string+'.txt'
+        fname_string = working_directory+datetime_string+prefix_string+'.csv'
 
         if self.SaveAllFlag:
             print('Saving file to '+fname_string)
             pd.DataFrame(np.array([self.dataX, self.dataY]).T,
-                         columns=['stagePos', 'Voltage']).to_csv(fname_string, index=False)
+                         columns=['stagePos', 'voltage']).to_csv(fname_string, index=False)
 
     # Define plotting and plot update functions
     def generate_plot(self):
-        plt.ion()
-        # create an axis
-        self.ax = self.figure.add_subplot(111)
+        self.figure.clear()  # Clear the figure to ensure it's completely reset
+        self.ax = self.figure.add_subplot(111)  # Recreate the axes
 
-        # discards the old graph
-        self.ax.clear()
+        # Set axis labels
+        self.ax.set_xlabel("Stage Position", fontsize=12)  # Set X-axis label
+        self.ax.set_ylabel("Voltage", fontsize=12)         # Set Y-axis label
 
-        self.lineX, = self.ax.plot(self.dataX, self.dataY)
+        # Adjust tick label font size
+        # Adjust major tick label font size
+        self.ax.tick_params(axis='both', which='major', labelsize=8)
+        # Adjust minor tick label font size, if minor ticks are used
+        self.ax.tick_params(axis='both', which='minor', labelsize=6)
 
-        # Crop the axis
-        # TODO: These limits should be defined from THz data.
+        # Set the initial axes limits based on the initial scan range
+        self.ax.set_xlim(self.nStart.value(), self.nStop.value())
         self.ax.set_ylim(self.voltage_min, self.voltage_max)
-        self.ax.set_xlim(self.time_min, self.time_max)
 
-        # refresh canvas
+        # Plot the initial data
+        self.lineX, = self.ax.plot(
+            self.dataX, self.dataY, 'r-')  # Adjust as needed
+
+        # Refresh canvas
         self.canvas.draw()
 
     def update_plot(self):
-        self.lineX.set_xdata(self.dataX)
-        self.lineX.set_ydata(self.dataY)
+        # Dynamically adjust the x-axis limits based on the current data range.
+        # This could start from your initial point and extend to the last point collected.
+        if len(self.dataX) > 1:  # Ensure there are at least two points to define a range
+            current_min_x = min(self.dataX)
+            current_max_x = max(self.dataX)
+            self.ax.set_xlim(current_min_x, current_max_x)
+        else:
+            # Optional: Set a default or initial range for the x-axis if you prefer
+            self.ax.set_xlim(self.nStart.value(),
+                             self.nStart.value() + self.nStepsize.value())
 
+        # Dynamically adjust Y-axis limits based on data
+        if len(self.dataY) > 0:  # Ensure there's at least one point
+            self.ax.set_ylim(min(self.dataY), max(self.dataY))
+        else:
+            # Optional: Set a default or initial range for the y-axis if you prefer
+            self.ax.set_ylim(self.voltage_min, self.voltage_max)
+
+        # Update the data for the line plot
+        self.lineX.set_data(self.dataX, self.dataY)
+
+        # Necessary to recompute the graph limits after updating the data
+        self.ax.relim()
+        self.ax.autoscale_view(True, True, True)
+
+        # Refresh canvas
         self.canvas.draw()
         self.canvas.flush_events()
-        if os.name == 'posix':
-            plt.pause(0.000001)
 
 
 if __name__ == '__main__':
