@@ -2,14 +2,24 @@
 
 ![Python workflow badge](https://github.com/earik87/light/actions/workflows/python-app.yml/badge.svg?event=push)
 
-Light is a data acquisition application for THz-TDS Instrument [in LSG group](https://users.metu.edu.tr/eokan/index.html). It is a fork of another [project](https://github.com/cbuhl/THzInstrumentControl). Why we create a new one? Because the instruments to be controlled are different (lockin SR830 and thorlabs lts150/m). Plus, we will try to use software development practices here as much as possible. 
+Light is a data acquisition application for THz-TDS Instrument in [Laser Research Group](https://users.metu.edu.tr/eokan/index.html). It is a fork of another great [project](https://github.com/cbuhl/THzInstrumentControl). But, we changed and improved lots of things already. 
 
-Note that this project is not in-use, yet and still under-development!
+Play the video to see how application works. Note that this is in demo mode. So, no hardware is connected.
+
+https://github.com/earik87/light/assets/36437947/27984e98-2990-42b4-97b9-23b0318dfc2a
+
 
 ## Requirements
+
+### Software
 - Python 3.12.1
 - Pip
 - Virtualenv
+
+### Hardware (Not required in demo mode)
+- Thorlabs lts150/m
+- Lockin SR830.
+
 
 ## Installation
 
@@ -30,3 +40,6 @@ If you are on Windows, then use the following commands instead:
 To run the application, use the following command:
 
     (venv) $ python3 app/light.py
+
+## Development
+Application is in demo mode by default. This means no hardware is connected, and scan is simulated. To deactivate demo mode and use hardware, comment out the line `activeProfile = 'demo'`. 
