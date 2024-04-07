@@ -12,7 +12,7 @@ https://github.com/earik87/light/assets/36437947/27984e98-2990-42b4-97b9-23b0318
 ## Requirements
 
 ### Software
-- Python 3.12.1
+- Python 3.8.10
 - Pip
 - Virtualenv
 
