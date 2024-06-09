@@ -40,7 +40,7 @@ class ThorlabsStageBaseClass(ABC):
         pass
 
 
-class ThorlabsStageControllerDemo():
+class ThorlabsStageControllerDemo(ThorlabsStageBaseClass):
 
     def __init__(self, serialNumber):
         self.serialNumber = serialNumber
@@ -58,7 +58,7 @@ class ThorlabsStageControllerDemo():
         print('DEMO stageController is disconnecting')
 
 
-class ThorlabsStageController():
+class ThorlabsStageController(ThorlabsStageBaseClass):
 
     def __init__(self, serialNumber):
         self.serialNumber = serialNumber

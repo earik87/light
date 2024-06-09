@@ -101,7 +101,7 @@ class SR830demo(LockinAmplifierBaseClass):
     def send(self):
         print('DEMO SR830: Send')
 
-class SR830:
+class SR830(LockinAmplifierBaseClass):
     def __init__(self, port, baudrate):
         self.port = port
         self.baudrate = baudrate
