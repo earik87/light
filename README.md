@@ -43,3 +43,4 @@ To run the application, use the following command:
 
 ## Development
 Application is in demo mode by default. This means no hardware is connected, and scan is simulated. To deactivate demo mode and use hardware, comment out the line `activeProfile = 'demo'`. 
+Recommended IDE is Visual Studio Code. 
