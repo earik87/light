@@ -36,19 +36,20 @@ class LightUIWindow(QMainWindow):
         else:
             print('CRITICAL: Unidentified OS.')
 
-        # Check if application runs in demo mode. Production mode is not tested yet!
+       # Check if application runs in demo mode. Production mode is not tested yet!
         if activeProfile == 'demo':
             self.lia = SR830demo(portLIA, 19200)
-            self.stage = ThorlabsStageControllerDemo(123456)
+            self.stage = ThorlabsStageControllerDemo("45283704")
         else:
             self.lia = SR830(portLIA, 19200)
-            self.stage = ThorlabsStageController(123456)
+            self.stage = ThorlabsStageController("45283704")
+
 
         self.lia.openConnection()
         time.sleep(0.25)
 
         self.stage.openConnection()
-        self.stage.initialize()
+        self.stage.home()
 
         # A hack is needed to start the drop down menus in a sane place.
         self.ddSens.setCurrentIndex(18)
@@ -233,7 +234,7 @@ class LightUIWindow(QMainWindow):
     def save_data_array(self):
         # The filename expression will be yyyymmdd-hr-mn-ss.dat
         prefix_string = self.fileprefix.text()
-        working_directory = os.getcwd()+'/'
+        working_directory = os.path.join(os.getcwd(), '..', 'data/')
         datetime_string = time.strftime('%Y%m%d-%H-%M-%S_')
         fname_string = working_directory+datetime_string+prefix_string+'.csv'
 

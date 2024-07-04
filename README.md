@@ -41,6 +41,8 @@ To run the application, use the following command:
 
     (venv) $ python3 app/light.py
 
+Note that in our lab pc (windows 7 - 64 bit) we had to downgrade PyQt5-Qt5==5.15.2 version, to be able to pull library. 
+
 ## Development
 Application is in demo mode by default. This means no hardware is connected, and scan is simulated. To deactivate demo mode and use hardware, comment out the line `activeProfile = 'demo'`. 
 Recommended IDE is Visual Studio Code. 
