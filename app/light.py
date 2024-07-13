@@ -118,8 +118,8 @@ class LightUIWindow(QMainWindow):
         # goto start of scan range
         self.stage.move(self.PresentPosition)
 
-        # wait for stage controller to arrive
-
+        # wait for stage controller to arrive.
+        #TODO: this part is not correct. Fix it!!!
         for i in range(length_of_scan):
 
             # Check for stop flag
