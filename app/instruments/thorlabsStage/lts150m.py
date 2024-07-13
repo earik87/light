@@ -7,8 +7,8 @@ from abc import ABC, abstractmethod
 import serial
 from time import sleep
 
+#This part only works at Lab Computer. Thats why it is inside try/catch block to bypass for development.
 try:
-
     clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.DeviceManagerCLI.dll")
     clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.GenericMotorCLI.dll")
     clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\ThorLabs.MotionControl.IntegratedStepperMotorsCLI.dll")

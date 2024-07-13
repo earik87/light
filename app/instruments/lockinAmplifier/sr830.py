@@ -47,7 +47,7 @@ class LockinAmplifierBaseClass(ABC):
         pass
 
 
-class SR830demo(LockinAmplifierBaseClass):
+class SR830Demo(LockinAmplifierBaseClass):
     def __init__(self, port, baudrate):
         self.timeConstant = 0
         self.sensitivity = 0

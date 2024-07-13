@@ -10,12 +10,12 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from matplotlib.figure import Figure
 import matplotlib
 import matplotlib.pyplot as plt
-from instruments.lockinAmplifier.sr830 import SR830demo, SR830
-from instruments.nidaq.nidaq import NIDAQ
+from instruments.lockinAmplifier.sr830 import SR830Demo, SR830
+from instruments.nidaq.nidaq import NIDAQ, NIDAQDemo
 from instruments.thorlabsStage.lts150m import ThorlabsStageControllerDemo, ThorlabsStageController
 
 # If you do not use demo, then comment this line.
-activeProfile = ''
+activeProfile = 'demo'
 
 
 class LightUIWindow(QMainWindow):
@@ -37,16 +37,15 @@ class LightUIWindow(QMainWindow):
         else:
             print('CRITICAL: Unidentified OS.')
 
-       # Check if application runs in demo mode. Production mode is not tested yet!
+       # Check if application runs in demo mode. Demo mode is bypassing real hardware connection and used for development purposes. 
         if activeProfile == 'demo':
-            self.lia = SR830demo(portLIA, 19200)
-            self.daq = NIDAQ()
+            self.lia = SR830Demo(portLIA, 19200) #SR830 is never set up (for now), so it is always in demo mode.
+            self.daq = NIDAQDemo()
             self.stage = ThorlabsStageControllerDemo("45283704")
         else:
-            self.lia = SR830demo(portLIA, 19200)
+            self.lia = SR830Demo(portLIA, 19200) #SR830 is never set up (for now), so it is always in demo mode.
             self.daq = NIDAQ()
             self.stage = ThorlabsStageController("45283704")
-
 
         self.lia.openConnection()
         time.sleep(0.25)
@@ -67,7 +66,6 @@ class LightUIWindow(QMainWindow):
         self.dataX = np.array([])
         self.dataY = np.array([])
         self.dataStep = np.array([])
-        garbage = self.estimate_scan_time()
 
         ## Set up windows and figures for plotting ##
         # a figure instance to plot on
@@ -218,9 +216,11 @@ class LightUIWindow(QMainWindow):
 
         self.post_move_wait_time = Tc * (1+nPostmove)
 
-        # Sum and multiply the time for the scan: The factor 120 is the velocity in steps/second. This should be tuned.
-        time = (Tc * (1+nPostmove) * nAvg + nStepsize *
-                1/120.0) * (nStop-nStart)/nStepsize
+        if activeProfile == 'demo':
+            time = ((self.post_move_wait_time * nAvg)+ 0.025) * (nStop-nStart)/nStepsize
+        else:
+            time = (Tc * (1+nPostmove) * nAvg + nStepsize * 1/120.0) * (nStop-nStart)/nStepsize
+            #TODO: 120.0 here is the velocity of stage. Just pull it from stage class.
 
         return time
 
