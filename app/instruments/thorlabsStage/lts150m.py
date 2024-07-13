@@ -115,7 +115,7 @@ class ThorlabsStageController(ThorlabsStageBaseClass):
 
         # Get Velocity Params
         vel_params = self.device.GetVelocityParams()
-        vel_params.MaxVelocity = Decimal(5.0)  # This is a bad idea
+        vel_params.MaxVelocity = Decimal(5.0)
         self.device.SetVelocityParams(vel_params)
 
         # Move the device to a new position

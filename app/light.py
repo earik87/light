@@ -202,6 +202,7 @@ class LightUIWindow(QMainWindow):
         nStart = self.nStart.value()
         nStop = self.nStop.value()
         nStepsize = self.nStepsize.value()
+        numberOfSteps = (nStop-nStart)/nStepsize
         nPostmove = self.nPostmove.value()
         nAvg = self.nAvg.value()
 
@@ -217,9 +218,9 @@ class LightUIWindow(QMainWindow):
         self.post_move_wait_time = Tc * (1+nPostmove)
 
         if activeProfile == 'demo':
-            time = ((self.post_move_wait_time * nAvg)+ 0.025) * (nStop-nStart)/nStepsize
+            time = ((self.post_move_wait_time * nAvg)+ 0.025) * numberOfSteps #0.025 is a correction value.
         else:
-            time = (Tc * (1+nPostmove) * nAvg + nStepsize * 1/120.0) * (nStop-nStart)/nStepsize
+            time = ((self.post_move_wait_time * nAvg) + (nStepsize / 5000)) * numberOfSteps #5 is the velocity of stage.
             #TODO: 120.0 here is the velocity of stage. Just pull it from stage class.
 
         return time
