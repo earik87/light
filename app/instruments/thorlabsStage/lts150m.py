@@ -84,7 +84,7 @@ class ThorlabsStageController(ThorlabsStageBaseClass):
 
         # Start polling and enable
         self.device.StartPolling(250)  # 250ms polling rate
-        time.sleep(5)  # Try a shorter delay first, then increase if necessary
+        time.sleep(10)  # Try a shorter delay first, then increase if necessary
         self.device.EnableDevice()
         time.sleep(0.25)  # Wait for device to enable
         print("stage is enabled.")
@@ -100,29 +100,32 @@ class ThorlabsStageController(ThorlabsStageBaseClass):
     def home(self):
         # Get parameters related to homing/zeroing/other
         home_params = self.device.GetHomingParams()
-        print(f'Homing velocity: {home_params.Velocity}\n,'
-                f'Homing Direction: {home_params.Direction}')
-        home_params.Velocity = Decimal(10.0)  # real units, mm/s
+        home_params.Velocity = Decimal(5.0)  # real units, mm/s
         # Set homing params (if changed)
         self.device.SetHomingParams(home_params)
 
         # Home or Zero the device (if a motor/piezo)
         print("Homing Device")
         self.device.Home(60000)  # 60 second timeout
-        print("Done")
+        print("Homing is Done")
 
-    def move(self, position):
+    def move(self, position_in_um):
+        position = position_in_um / 1000 # um to mm convertion.
         print('stagecontroller is ordered to move to ' + str(position))
 
         # Get Velocity Params
         vel_params = self.device.GetVelocityParams()
-        vel_params.MaxVelocity = Decimal(50.0)  # This is a bad idea
+        vel_params.MaxVelocity = Decimal(5.0)  # This is a bad idea
         self.device.SetVelocityParams(vel_params)
 
         # Move the device to a new position
-        new_pos = Decimal(150.0)  # Must be a .NET decimal
+        new_pos = Decimal(position)  # Must be a .NET decimal
         print(f'Moving to {new_pos}')
-        self.device.MoveTo(new_pos, 60000)  # 60 second timeout
+        try:
+            self.device.MoveTo(new_pos, 60000)  # 60 second timeout
+        except Exception as e:
+            error_message = str(e)
+            print("Given position could be outside of stage limits, detailed error; ", error_message)
         print("Done")
 
     def closeConnection(self):

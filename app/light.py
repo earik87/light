@@ -11,10 +11,11 @@ from matplotlib.figure import Figure
 import matplotlib
 import matplotlib.pyplot as plt
 from instruments.lockinAmplifier.sr830 import SR830demo, SR830
+from instruments.nidaq.nidaq import NIDAQ
 from instruments.thorlabsStage.lts150m import ThorlabsStageControllerDemo, ThorlabsStageController
 
 # If you do not use demo, then comment this line.
-activeProfile = 'demo'
+activeProfile = ''
 
 
 class LightUIWindow(QMainWindow):
@@ -39,9 +40,11 @@ class LightUIWindow(QMainWindow):
        # Check if application runs in demo mode. Production mode is not tested yet!
         if activeProfile == 'demo':
             self.lia = SR830demo(portLIA, 19200)
+            self.daq = NIDAQ()
             self.stage = ThorlabsStageControllerDemo("45283704")
         else:
-            self.lia = SR830(portLIA, 19200)
+            self.lia = SR830demo(portLIA, 19200)
+            self.daq = NIDAQ()
             self.stage = ThorlabsStageController("45283704")
 
 
@@ -174,7 +177,8 @@ class LightUIWindow(QMainWindow):
     def measureVoltage(self):
         dataY = []
         for i in range(int(self.nAvg.value())):
-            single_measurement = self.lia.measure()
+            single_measurement = self.daq.measure() #nidaq read
+            #single_measurement = self.lia.measure() #SR830 read
             dataY.append(single_measurement)
 
         return (np.mean(dataY))
