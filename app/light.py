@@ -21,13 +21,15 @@ THORLABS_STAGE_SERIAL_NO = "45283704"
 
 class LightUIWindow(QMainWindow):
     def __init__(self):
-        super(LightUIWindow, self).__init__()
-        loadUi('app/MainWindow.ui', self)
-        self.setWindowTitle('THz Scan GUI')
-
+        self.initialize_window()
         self.initialize_instruments()
         self.initialize_ui_components()
         self.initialize_scan_data()
+
+    def initialize_window(self):
+        super(LightUIWindow, self).__init__()
+        loadUi('app/MainWindow.ui', self)
+        self.setWindowTitle('THz Scan GUI')
 
     def initialize_instruments(self):
         if DEMO_MODE:
@@ -41,7 +43,6 @@ class LightUIWindow(QMainWindow):
         self.lia = SR830Demo("com3", 19200) 
         self.lia.openConnection()
         time.sleep(0.25)
-
         self.stage.openConnection()
         self.stage.home()
 
@@ -55,7 +56,6 @@ class LightUIWindow(QMainWindow):
     def set_ui_buttons_to_default_values(self):
         self.ddSens.setCurrentIndex(18)
         self.ddTc.setCurrentIndex(7)
-
         self.StopRunFlag = False
         self.IsHomedFlag = False
         self.SaveAllFlag = False
@@ -74,7 +74,6 @@ class LightUIWindow(QMainWindow):
         self.toolbar = NavigationToolbar(self.canvas, self)
         if os.name == 'posix':
             matplotlib.rcParams.update({'font.size': 5})
-
         self.verticalLayout.insertWidget(0, self.toolbar)
         self.verticalLayout.replaceWidget(self.wplot, self.canvas)
 
@@ -87,6 +86,7 @@ class LightUIWindow(QMainWindow):
         self.cbSaveall.stateChanged.connect(self.update_savestate)
 
 
+    #TODO: Refactor this method.
     def btnStart_clicked(self):
         try:
             self.lia.demo_measure_reset()  # should be removed when out of dev
