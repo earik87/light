@@ -168,7 +168,6 @@ class LightUIWindow(QMainWindow):
         self.lia.setTimeConstant(selected_tc)
 
 
-    # Define update, save and time calc functions
     def measureVoltage(self):
         dataY = []
         for i in range(int(self.nAvg.value())):
@@ -181,9 +180,6 @@ class LightUIWindow(QMainWindow):
 
     def update_statusbar(self, new_update):
         self.statusBar.setText('Status: '+new_update)
-
-        # As this is an often used function, I will piggy-back on this to ensure
-        # the scan time estimate is regularly updated and shown.
         estimated_scan_time = self.estimate_scan_time()
         m, s = divmod(estimated_scan_time, 60)
         h, m = divmod(m, 60)
@@ -215,7 +211,7 @@ class LightUIWindow(QMainWindow):
         elif unit == 'ms':
             Tc = float(multiplier) * 1e-3
 
-        self.post_move_wait_time = Tc * (1+nPostmove)
+        self.post_move_wait_time = Tc * (1 + nPostmove)
 
         if DEMO_MODE:
             time = ((self.post_move_wait_time * nAvg)+ 0.025) * numberOfSteps #0.025 is a correction value.
