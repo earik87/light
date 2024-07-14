@@ -15,83 +15,77 @@ from instruments.nidaq.nidaq import NIDAQ, NIDAQDemo
 from instruments.thorlabsStage.lts150m import ThorlabsStageControllerDemo, ThorlabsStageController
 
 # If you do not use demo, then comment this line.
-activeProfile = 'demo'
+DEMO_MODE = True
+THORLABS_STAGE_SERIAL_NO = "45283704"
 
 
 class LightUIWindow(QMainWindow):
     def __init__(self):
-        global activeProfile
         super(LightUIWindow, self).__init__()
         loadUi('app/MainWindow.ui', self)
         self.setWindowTitle('THz Scan GUI')
 
-        # Check for os:
-        if os.name == 'nt':  # Respond to windows platform
-            print('Identified Windows OS')
-            portLIA = 'com3'  # Prolific driver
-            portStage = 'com4'  # Arduino Uno ID
-        elif os.name == 'posix':
-            print('Identified Mac OS')
-            portLIA = '/dev/tty.usbserial'
-            portStage = '/dev/tty.usbmodem1421'
-        else:
-            print('CRITICAL: Unidentified OS.')
+        self.initialize_instruments()
+        self.initialize_ui_components()
+        self.initialize_scan_data()
 
-       # Check if application runs in demo mode. Demo mode is bypassing real hardware connection and used for development purposes. 
-        if activeProfile == 'demo':
-            self.lia = SR830Demo(portLIA, 19200) #SR830 is never set up (for now), so it is always in demo mode.
-            self.daq = NIDAQDemo()
+    def initialize_instruments(self):
+        if DEMO_MODE:
+            self.nidaq = NIDAQDemo()
             self.stage = ThorlabsStageControllerDemo("45283704")
         else:
-            self.lia = SR830Demo(portLIA, 19200) #SR830 is never set up (for now), so it is always in demo mode.
-            self.daq = NIDAQ()
+            self.nidaq = NIDAQ()
             self.stage = ThorlabsStageController("45283704")
 
+        #SR830 is never set up (for now), so it is always in demo mode.
+        self.lia = SR830Demo("com3", 19200) 
         self.lia.openConnection()
         time.sleep(0.25)
 
         self.stage.openConnection()
         self.stage.home()
 
-        # A hack is needed to start the drop down menus in a sane place.
+
+    def initialize_ui_components(self):  
+        self.set_ui_buttons_to_default_values()
+        self.initialize_figure()
+        self.initialize_buttons()
+
+
+    def set_ui_buttons_to_default_values(self):
         self.ddSens.setCurrentIndex(18)
         self.ddTc.setCurrentIndex(7)
 
-        # Define execution control variables
         self.StopRunFlag = False
         self.IsHomedFlag = False
         self.SaveAllFlag = False
         self.SaveOnStop = False
 
+
+    def initialize_scan_data(self):
         self.dataX = np.array([])
         self.dataY = np.array([])
         self.dataStep = np.array([])
 
-        ## Set up windows and figures for plotting ##
-        # a figure instance to plot on
+
+    def initialize_figure(self):
         self.figure = Figure()
-        # this is the Canvas Widget that displays the `figure`
-        # it takes the `figure` instance as a parameter to __init__
         self.canvas = FigureCanvas(self.figure)
-        # this is the Navigation widget
-        # it takes the Canvas widget and a parent
         self.toolbar = NavigationToolbar(self.canvas, self)
-        # Scale any fonts accordingly.
         if os.name == 'posix':
             matplotlib.rcParams.update({'font.size': 5})
 
-        # Insert the widgets at appropriate places, and replace the placeholder widget.
         self.verticalLayout.insertWidget(0, self.toolbar)
         self.verticalLayout.replaceWidget(self.wplot, self.canvas)
 
-        # Define signals and slots for buttons
+
+    def initialize_buttons(self):
         self.btnStart.clicked.connect(self.btnStart_clicked)
         self.btnStop.clicked.connect(self.btnStop_clicked)
         self.btnGoto.clicked.connect(self.btnGoto_clicked)
         self.btnUpdate.clicked.connect(self.btnUpdate_clicked)
         self.cbSaveall.stateChanged.connect(self.update_savestate)
 
-    # Define button functions
 
     def btnStart_clicked(self):
         try:
@@ -99,8 +93,7 @@ class LightUIWindow(QMainWindow):
         except AttributeError:
             pass
 
-        length_of_scan = int(
-            ((self.nStop.value() - self.nStart.value())/self.nStepsize.value()) + 1)
+        length_of_scan = int(((self.nStop.value() - self.nStart.value())/self.nStepsize.value()) + 1)
         self.voltage_min = 0
         self.voltage_max = 10
         self.time_min = self.nStart.value()
@@ -148,6 +141,7 @@ class LightUIWindow(QMainWindow):
 
         self.save_data_array()
 
+
     def btnStop_clicked(self):
         self.update_statusbar('Stopping scan')
         self.StopRunFlag = True
@@ -155,10 +149,12 @@ class LightUIWindow(QMainWindow):
             self.save_data_array()
         self.lia.setParameter('I0')
 
+
     def btnGoto_clicked(self):
         self.update_statusbar('Starting Goto')
         self.stage.move(self.nPosition.value())
         self.update_statusbar('Goto value reached')
+
 
     def btnUpdate_clicked(self):
         self.update_statusbar('Updating Lockin')
@@ -171,15 +167,17 @@ class LightUIWindow(QMainWindow):
         # print('Time constant: '+str(selected_tc))
         self.lia.setTimeConstant(selected_tc)
 
+
     # Define update, save and time calc functions
     def measureVoltage(self):
         dataY = []
         for i in range(int(self.nAvg.value())):
-            single_measurement = self.daq.measure() #nidaq read
+            single_measurement = self.nidaq.measure() #nidaq read
             #single_measurement = self.lia.measure() #SR830 read
             dataY.append(single_measurement)
 
         return (np.mean(dataY))
+
 
     def update_statusbar(self, new_update):
         self.statusBar.setText('Status: '+new_update)
@@ -191,12 +189,14 @@ class LightUIWindow(QMainWindow):
         h, m = divmod(m, 60)
         self.lblEstduration.setText("%dhrs, %02dmins, %02dsecs" % (h, m, s))
 
+
     def update_savestate(self):
         if self.cbSaveall.checkState() == 2:
             self.SaveAllFlag = True
         else:
             self.SaveAllFlag = False
         self.update_statusbar('Saves all: '+str(self.SaveAllFlag))
+
 
     def estimate_scan_time(self):
         nStart = self.nStart.value()
@@ -217,7 +217,7 @@ class LightUIWindow(QMainWindow):
 
         self.post_move_wait_time = Tc * (1+nPostmove)
 
-        if activeProfile == 'demo':
+        if DEMO_MODE:
             time = ((self.post_move_wait_time * nAvg)+ 0.025) * numberOfSteps #0.025 is a correction value.
         else:
             time = ((self.post_move_wait_time * nAvg) + (nStepsize / 5000)) * numberOfSteps #5 is the velocity of stage.
@@ -240,13 +240,19 @@ class LightUIWindow(QMainWindow):
         # The filename expression will be yyyymmdd-hr-mn-ss.dat
         prefix_string = self.fileprefix.text()
         working_directory = os.path.join(os.getcwd(), '..', 'data/')
-        datetime_string = time.strftime('%Y%m%d-%H-%M-%S_')
-        fname_string = working_directory+datetime_string+prefix_string+'.csv'
+        
+        # Create the data directory if it does not exist
+        if not os.path.exists(working_directory):
+            os.makedirs(working_directory)
+
+        datetime_string = time.strftime('%Y%m%d-%H-%M-%S')
+        fname_string = working_directory + datetime_string + prefix_string + '.csv'
 
         if self.SaveAllFlag:
-            print('Saving file to '+fname_string)
+            print('Saving file to ' + fname_string)
             pd.DataFrame(np.array([self.dataX, self.dataY]).T,
                          columns=['stagePos', 'voltage']).to_csv(fname_string, index=False)
+
 
     # Define plotting and plot update functions
     def generate_plot(self):
