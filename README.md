@@ -2,7 +2,7 @@
 
 ![Python workflow badge](https://github.com/earik87/light/actions/workflows/python-app.yml/badge.svg?event=push)
 
-Light is a data acquisition application for THz-TDS Instrument in [Laser Research Group](https://users.metu.edu.tr/eokan/index.html). It is a fork of another great [project](https://github.com/cbuhl/THzInstrumentControl). But, we changed and improved lots of things already. 
+Light is a data acquisition application for THz-TDS Instrument in [Laser Research Group](https://users.metu.edu.tr/eokan/index.html).
 
 Play the video to see how application works. Note that this is in demo mode. So, no hardware is connected.
 
@@ -41,8 +41,6 @@ To run the application, use the following command:
 
     (venv) $ python3 app/light.py
 
-Note that in our lab pc (windows 7 - 64 bit) we had to downgrade PyQt5-Qt5==5.15.2 version, to be able to pull library. 
-
 ## Development
-Application is in demo mode by default. This means no hardware is connected, and scan is simulated. To deactivate demo mode and use hardware, comment out the line `activeProfile = 'demo'`. 
+Application is in demo mode by default with parameter `DEMO_MODE`. This means no hardware is connected, and scan is simulated. To deactivate demo mode and use hardware, make this constant `False`.
 Recommended IDE is Visual Studio Code. 
