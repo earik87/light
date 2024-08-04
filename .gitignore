@@ -6,5 +6,4 @@
 *.pyc
 __pycache__
 venv/
-*.txt
 *.csv
