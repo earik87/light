@@ -40,8 +40,8 @@ class LightUIWindow(QMainWindow):
             self.stage = ThorlabsStageController("45283704")
 
         #SR830 is never set up (for now), so it is always in demo mode.
-        self.lia = SR830Demo("com3", 19200) 
-        self.lia.openConnection()
+        self.lia = SR830Demo() 
+        self.lia.openConnection('ASRL::COM1::INSTR', 19200)
         time.sleep(0.25)
         self.stage.openConnection()
         self.stage.home()
@@ -88,11 +88,6 @@ class LightUIWindow(QMainWindow):
 
     #TODO: Refactor this method.
     def btnStart_clicked(self):
-        try:
-            self.lia.demo_measure_reset()  # should be removed when out of dev
-        except AttributeError:
-            pass
-
         length_of_scan = int(((self.nStop.value() - self.nStart.value())/self.nStepsize.value()) + 1)
         self.voltage_min = 0
         self.voltage_max = 10
@@ -147,7 +142,6 @@ class LightUIWindow(QMainWindow):
         self.StopRunFlag = True
         if self.SaveOnStop:
             self.save_data_array()
-        self.lia.setParameter('I0')
 
 
     def btnGoto_clicked(self):
