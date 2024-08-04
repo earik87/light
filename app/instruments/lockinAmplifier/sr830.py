@@ -78,9 +78,9 @@ class SR830(LockinAmplifierBaseClass):
         if self.instrument is None:
             raise ConnectionError("Instrument not connected.")
         
-        measurement = self.instrument.x
-        print("Measurement is: ", measurement)
-        return measurement
+        voltage = self.instrument.magnitude
+        print("Measurement is: ", voltage)
+        return voltage
 
     def setTimeConstant(self, timeConstant):
         if self.instrument is None:
