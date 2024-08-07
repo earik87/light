@@ -31,7 +31,7 @@ After cloning, create a virtual environment and install the requirements. For Li
 
 If you are on Windows, then use the following commands instead:
 
-    $ virtualenv venv
+    $ virtualenv venv (alternatively, py -m venv venv)
     $ venv\Scripts\activate
     (venv) $ pip install -r requirements.txt
 
@@ -39,7 +39,7 @@ If you are on Windows, then use the following commands instead:
 
 To run the application, use the following command:
 
-    (venv) $ python3 app/light.py
+    (venv) $ python3 app/light.py (on windows, py app/light.py)
 
 ## Development
 Application is in demo mode by default with parameter `DEMO_MODE`. This means no hardware is connected, and scan is simulated. To deactivate demo mode and use hardware, make this constant `False`.
