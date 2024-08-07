@@ -3,7 +3,9 @@ import numpy as np
 from time import sleep
 from abc import ABC, abstractmethod
 from pymeasure.instruments.srs import SR830 as RealSR830
+from pymeasure.instruments.resources import list_resources
 import pyvisa
+from pyvisa.constants import StopBits, Parity
 
 class LockinAmplifierBaseClass(ABC):
     @abstractmethod
@@ -70,10 +72,30 @@ class SR830(LockinAmplifierBaseClass):
     def openConnection(self, port, baudrate):
         # Initialize visa resource manager
         rm = pyvisa.ResourceManager()
-        # Open connection to the SR830 using USB to RS232
-        self.instrument = RealSR830(rm.open_resource(port, baud_rate=baudrate))
-        print('Real SR830 is connected')
-
+        print(rm.list_resources())
+        #To understand how this code works, read docs carefully!!!
+        #https://pyvisa.readthedocs.io/en/latest/introduction/communication.html#making-sure-the-instrument-understand-the-command
+        my_instrument = rm.open_resource('ASRL3::INSTR')
+        my_instrument.read_termination = '\r'
+        my_instrument.write_termination = '\n'
+        self.instrument = RealSR830(my_instrument)
+        #Ask id info.
+        print(my_instrument.query('*IDN?'))
+        #Ask time constant wıth low level query.
+        # print(my_instrument.query('OFLT?'))
+        #Get time constant.
+        print("Time constant is", self.instrument.time_constant)
+        new_tc = 1
+        print("Setting time constant to ", new_tc)
+        self.instrument.time_constant = new_tc
+        print("New time constant is", self.instrument.time_constant)
+        print("Sensitivity is", self.instrument.sensitivity)
+        #Use thıs carefully!
+        # self.instrument.quick_range()
+        # print("Setting sensitivity to ", new_sens)
+        # self.instrument.sensitivty = new_sens
+        # print("New Sensitivity is", self.instrument.sensitivity)
+       
     def measure(self) -> float:
         if self.instrument is None:
             raise ConnectionError("Instrument not connected.")

@@ -40,8 +40,8 @@ class LightUIWindow(QMainWindow):
             self.stage = ThorlabsStageController("45283704")
 
         #SR830 is never set up (for now), so it is always in demo mode.
-        self.lia = SR830Demo() 
-        self.lia.openConnection('ASRL::COM1::INSTR', 19200)
+        self.lia = SR830() 
+        self.lia.openConnection("ASRL3::INSTR", 9600)
         time.sleep(0.25)
         self.stage.openConnection()
         self.stage.home()
@@ -165,8 +165,8 @@ class LightUIWindow(QMainWindow):
     def measureVoltage(self):
         dataY = []
         for i in range(int(self.nAvg.value())):
-            single_measurement = self.nidaq.measure() #nidaq read
-            #single_measurement = self.lia.measure() #SR830 read
+            #single_measurement = self.nidaq.measure() #nidaq read
+            single_measurement = self.lia.measure() #SR830 read
             dataY.append(single_measurement)
 
         return (np.mean(dataY))
