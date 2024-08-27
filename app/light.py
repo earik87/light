@@ -11,12 +11,26 @@ from matplotlib.figure import Figure
 import matplotlib
 import matplotlib.pyplot as plt
 from instruments.lockinAmplifier.sr830 import SR830Demo, SR830
-from instruments.nidaq.nidaq import NIDAQ, NIDAQDemo
+# from instruments.nidaq.nidaq import NIDAQ, NIDAQDemo
 from instruments.thorlabsStage.lts150m import ThorlabsStageControllerDemo, ThorlabsStageController
 
 # If you do not use demo, then comment this line.
-DEMO_MODE = True
+DEMO_MODE = False
 THORLABS_STAGE_SERIAL_NO = "45283704"
+
+time_constants = {
+    '100 s': 100.0,
+    '30 s': 30.0,
+    '10 s': 10.0,
+    '3 s': 3.0,
+    '1 s': 1.0,
+    '300 ms': 0.3,   # 300 milliseconds = 0.3 seconds
+    '100 ms': 0.1,   # 100 milliseconds = 0.1 seconds
+    '30 ms': 0.03,   # 50 milliseconds = 0.05 seconds
+    '10 ms': 0.01,   # 10 milliseconds = 0.01 seconds
+    '3 ms': 0.003,   # 1 millisecond = 0.001 seconds
+    '1 ms': 0.001,   # 1 millisecond = 0.001 seconds
+}
 
 
 class LightUIWindow(QMainWindow):
@@ -33,15 +47,14 @@ class LightUIWindow(QMainWindow):
 
     def initialize_instruments(self):
         if DEMO_MODE:
-            self.nidaq = NIDAQDemo()
+            # self.nidaq = NIDAQDemo()
             self.stage = ThorlabsStageControllerDemo("45283704")
         else:
-            self.nidaq = NIDAQ()
+            # self.nidaq = NIDAQ()
             self.stage = ThorlabsStageController("45283704")
 
-        #SR830 is never set up (for now), so it is always in demo mode.
-        self.lia = SR830Demo() 
-        self.lia.openConnection('ASRL::COM1::INSTR', 19200)
+        self.lia = SR830() 
+        self.lia.openConnection("ASRL5::INSTR", 9600)
         time.sleep(0.25)
         self.stage.openConnection()
         self.stage.home()
@@ -54,7 +67,7 @@ class LightUIWindow(QMainWindow):
 
 
     def set_ui_buttons_to_default_values(self):
-        self.ddSens.setCurrentIndex(18)
+        # self.ddSens.setCurrentIndex(18)
         self.ddTc.setCurrentIndex(7)
         self.StopRunFlag = False
         self.IsHomedFlag = False
@@ -153,20 +166,28 @@ class LightUIWindow(QMainWindow):
     def btnUpdate_clicked(self):
         self.update_statusbar('Updating Lockin')
         # Update sensitivity
-        selected_sens = self.ddSens.currentIndex()
+        # selected_sens = self.ddSens.currentIndex()
         # print('Sensitivity: '+str(selected_sens))
-        self.lia.setSensitivity(selected_sens)
+        # self.lia.setSensitivity(selected_sens)
         # Update filter Tcs
-        selected_tc = 10-self.ddTc.currentIndex()
-        # print('Time constant: '+str(selected_tc))
+        # Retrieve the selected value from the QComboBox
+        selected_text = self.ddTc.currentText()
+
+        # Get the time constant value in seconds using the mapping
+        if selected_text in time_constants:
+            selected_tc = time_constants[selected_text]
+        else:
+            raise ValueError(f"Unexpected time constant value: {selected_text}")
+
+        # Set the time constant
         self.lia.setTimeConstant(selected_tc)
 
 
     def measureVoltage(self):
         dataY = []
         for i in range(int(self.nAvg.value())):
-            single_measurement = self.nidaq.measure() #nidaq read
-            #single_measurement = self.lia.measure() #SR830 read
+            #single_measurement = self.nidaq.measure() #nidaq read
+            single_measurement = self.lia.measure() #SR830 read
             dataY.append(single_measurement)
 
         return (np.mean(dataY))
