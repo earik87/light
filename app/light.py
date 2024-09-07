@@ -11,12 +11,14 @@ from matplotlib.figure import Figure
 import matplotlib
 import matplotlib.pyplot as plt
 from instruments.lockinAmplifier.sr830 import SR830Demo, SR830
-# from instruments.nidaq.nidaq import NIDAQ, NIDAQDemo
 from instruments.thorlabsStage.lts150m import ThorlabsStageControllerDemo, ThorlabsStageController
 
-# If you do not use demo, then comment this line.
-DEMO_MODE = False
+DEMO_MODE = True
+
 THORLABS_STAGE_SERIAL_NO = "45283704"
+LIA_PORT = "ASRL5::INSTR"
+LIA_BAUDRATE = 9600
+
 
 time_constants = {
     '100 s': 100.0,
@@ -47,18 +49,17 @@ class LightUIWindow(QMainWindow):
 
     def initialize_instruments(self):
         if DEMO_MODE:
-            # self.nidaq = NIDAQDemo()
-            self.stage = ThorlabsStageControllerDemo("45283704")
+            self.lia = SR830Demo()
+            self.stage = ThorlabsStageControllerDemo(THORLABS_STAGE_SERIAL_NO)
         else:
-            # self.nidaq = NIDAQ()
-            self.stage = ThorlabsStageController("45283704")
+            self.lia = SR830()
+            self.stage = ThorlabsStageController(THORLABS_STAGE_SERIAL_NO)
 
-        self.lia = SR830() 
-        self.lia.openConnection("ASRL5::INSTR", 9600)
-        time.sleep(0.25)
+        self.lia.openConnection(LIA_PORT, LIA_BAUDRATE)
+        self.lia.setTimeConstant(0.1)
+        self.sensitivityOnUI.setText(str(self.lia.getSensitivity()))
         self.stage.openConnection()
         self.stage.home()
-
 
     def initialize_ui_components(self):  
         self.set_ui_buttons_to_default_values()
@@ -68,7 +69,7 @@ class LightUIWindow(QMainWindow):
 
     def set_ui_buttons_to_default_values(self):
         # self.ddSens.setCurrentIndex(18)
-        self.ddTc.setCurrentIndex(7)
+        self.ddTc.setCurrentIndex(5)
         self.StopRunFlag = False
         self.IsHomedFlag = False
         self.SaveAllFlag = False
@@ -164,16 +165,9 @@ class LightUIWindow(QMainWindow):
 
 
     def btnUpdate_clicked(self):
-        self.update_statusbar('Updating Lockin')
-        # Update sensitivity
-        # selected_sens = self.ddSens.currentIndex()
-        # print('Sensitivity: '+str(selected_sens))
-        # self.lia.setSensitivity(selected_sens)
-        # Update filter Tcs
-        # Retrieve the selected value from the QComboBox
+        self.update_statusbar('Setting TimeConstant in Lockin.')
         selected_text = self.ddTc.currentText()
 
-        # Get the time constant value in seconds using the mapping
         if selected_text in time_constants:
             selected_tc = time_constants[selected_text]
         else:
@@ -181,12 +175,13 @@ class LightUIWindow(QMainWindow):
 
         # Set the time constant
         self.lia.setTimeConstant(selected_tc)
+        newTimeConstant= self.lia.getTimeConstant()
+        self.update_statusbar("Time constant is set in Lockin to " + str(newTimeConstant) + " seconds.")
 
 
     def measureVoltage(self):
         dataY = []
         for i in range(int(self.nAvg.value())):
-            #single_measurement = self.nidaq.measure() #nidaq read
             single_measurement = self.lia.measure() #SR830 read
             dataY.append(single_measurement)
 
@@ -194,11 +189,11 @@ class LightUIWindow(QMainWindow):
 
 
     def update_statusbar(self, new_update):
-        self.statusBar.setText('Status: '+new_update)
+        self.statusBar.setText('Status: '+ new_update)
         estimated_scan_time = self.estimate_scan_time()
         m, s = divmod(estimated_scan_time, 60)
         h, m = divmod(m, 60)
-        self.lblEstduration.setText("%dhrs, %02dmins, %02dsecs" % (h, m, s))
+        self.estimatedTime.setText("%dhrs, %02dmins, %02dsecs" % (h, m, s))
 
 
     def update_savestate(self):
@@ -257,12 +252,24 @@ class LightUIWindow(QMainWindow):
             os.makedirs(working_directory)
 
         datetime_string = time.strftime('%Y%m%d-%H-%M-%S')
-        fname_string = working_directory + datetime_string + prefix_string + '.csv'
+        
+        # File for the main data
+        data_fname = working_directory + datetime_string + prefix_string + '_data.csv'
+        
+        # File for the parameters
+        params_fname = working_directory + datetime_string + prefix_string + '_params.csv'
 
         if self.SaveAllFlag:
-            print('Saving file to ' + fname_string)
-            pd.DataFrame(np.array([self.dataX, self.dataY]).T,
-                         columns=['stagePos', 'voltage']).to_csv(fname_string, index=False)
+            # Save the main data
+            print('Saving data to ' + data_fname)
+            df = pd.DataFrame(np.array([self.dataX, self.dataY]).T, columns=['stagePos', 'voltage'])
+            df.to_csv(data_fname, index=False)
+            
+            # Save the parameters in a separate file
+            print('Saving parameters to ' + params_fname)
+            with open(params_fname, 'w') as f:
+                f.write('stageStart, stageStop, stageStepSize, timeConstant, sensitivity, postStepPause, sampleAverage\n')
+                f.write(f"{self.nStart.value()}, {self.nStop.value()}, {self.nStepsize.value()}, {self.lia.getTimeConstant()}, {self.lia.getSensitivity()}, {self.nPostmove.value()}, {self.nAvg.value()}\n")
 
 
     # Define plotting and plot update functions

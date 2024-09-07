@@ -52,17 +52,19 @@ class SR830Demo(LockinAmplifierBaseClass):
 
     def setTimeConstant(self, timeConstant):
         self.timeConstant = timeConstant
-        print('DEMO SR830: time constant is set to '+ str(self.timeConstant))
+        print('DEMO SR830: time constant is set to '+ str(self.timeConstant) + ' second.')
 
     def setSensitivity(self, sensitivity):
         self.sensitivity = sensitivity
         print('DEMO SR830: sensitivity is set to ' + str(self.sensitivity))
 
     def getTimeConstant(self):
-        print('DEMO SR830: time constant is set to ' + str(self.timeConstant))
+        print('DEMO SR830: time constant is ' + str(self.timeConstant) + ' second.')
+        return self.timeConstant
 
     def getSensitivity(self):
-        print('DEMO SR830: sensitivity is set to ' + str(self.sensitivity))
+        print('DEMO SR830: sensitivity is ' + str(self.sensitivity))
+        return self.sensitivity
 
 
 class SR830(LockinAmplifierBaseClass):
@@ -79,22 +81,10 @@ class SR830(LockinAmplifierBaseClass):
         my_instrument.read_termination = '\r' 
         my_instrument.write_termination = '\n' 
         self.instrument = RealSR830(my_instrument)
-        #Ask id info.
+
         print(my_instrument.query('*IDN?'))
-        #Ask time constant wıth low level query.
-        # print(my_instrument.query('OFLT?'))
-        #Get time constant.
         print("Time constant is", self.instrument.time_constant)
-        new_tc = 0.3
-        print("Setting time constant to ", new_tc)
-        self.instrument.time_constant = new_tc
-        print("New time constant is", self.instrument.time_constant)
-        
-        
-        # print("Sensitivity is", self.instrument.sensitivity)
-        # my_instrument.query('SENS26')
-        # sleep(2)
-        # print("New Sensitivity is", self.instrument.sensitivity)
+        print("Sensitivity is", self.instrument.sensitivity)
        
     def measure(self) -> float:
         if self.instrument is None:
@@ -109,7 +99,7 @@ class SR830(LockinAmplifierBaseClass):
             raise ConnectionError("Instrument not connected.")
         
         self.instrument.time_constant = timeConstant
-        print('Real SR830: time constant is set to ' + str(timeConstant))
+        print('Real SR830: time constant is set to ' + str(timeConstant) + ' second.')
 
     def setSensitivity(self, sensitivity):
         if self.instrument is None:
@@ -123,7 +113,7 @@ class SR830(LockinAmplifierBaseClass):
             raise ConnectionError("Instrument not connected.")
         
         time_constant = self.instrument.time_constant
-        print('Real SR830: time constant is ' + str(time_constant))
+        print('Real SR830: time constant is ' + str(time_constant) + ' second.')
         return time_constant
 
     def getSensitivity(self):
