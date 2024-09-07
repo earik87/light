@@ -56,7 +56,7 @@ class LightUIWindow(QMainWindow):
             self.stage = ThorlabsStageController(THORLABS_STAGE_SERIAL_NO)
 
         self.lia.openConnection(LIA_PORT, LIA_BAUDRATE)
-        self.lia.setTimeConstant(0.1)
+        self.lia.setTimeConstant(0.3)
         self.sensitivityOnUI.setText(str(self.lia.getSensitivity()))
         self.stage.openConnection()
         self.stage.home()
@@ -69,7 +69,7 @@ class LightUIWindow(QMainWindow):
 
     def set_ui_buttons_to_default_values(self):
         # self.ddSens.setCurrentIndex(18)
-        self.ddTc.setCurrentIndex(5)
+        self.ddTc.setCurrentIndex(4)
         self.StopRunFlag = False
         self.IsHomedFlag = False
         self.SaveAllFlag = False
