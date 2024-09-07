@@ -115,19 +115,26 @@ class LightUIWindow(QMainWindow):
         self.SaveOnStop = False
 
         self.generate_plot()
-        # update step point
-        self.PresentPosition = self.nStart.value()
-        # goto start of scan range
-        self.stage.move(self.PresentPosition)
 
+        # goto start of scan range
+        self.stage.move(self.nStart.value())
+
+        post_move_wait_time = self.lia.getTimeConstant() * (1 + self.nPostmove.value())
+ 
         # wait for stage controller to arrive.
-        #TODO: this part is not correct. Fix it!!!
         for i in range(length_of_scan):
 
             # Check for stop flag
             if self.StopRunFlag == True:
                 break
 
+            # Execute move start
+            self.PresentPosition = self.nStart.value() + (i * self.nStepsize.value())
+            self.stage.move(self.PresentPosition)
+            
+            # Execute post move wait
+            self.interruptable_sleep(post_move_wait_time)
+            
             # Measure data
             voltageValue = self.measureVoltage()
 
@@ -135,15 +142,6 @@ class LightUIWindow(QMainWindow):
             self.dataX = np.append(self.dataX, self.PresentPosition)
             self.dataY = np.append(self.dataY, voltageValue)
             self.dataStep = np.append(self.dataStep, self.PresentPosition)
-
-            # Increment the PresentPosition controller variable
-            self.PresentPosition = self.PresentPosition + self.nStepsize.value()
-
-            # Execute move start
-            self.stage.move(self.PresentPosition)
-
-            # Execute post move wait
-            self.interruptable_sleep(self.post_move_wait_time)
 
             # Update plot
             self.update_plot()
@@ -208,28 +206,15 @@ class LightUIWindow(QMainWindow):
         nStart = self.nStart.value()
         nStop = self.nStop.value()
         nStepsize = self.nStepsize.value()
-        numberOfSteps = (nStop-nStart)/nStepsize
+        numberOfSteps = ((nStop-nStart)/nStepsize) + 1
         nPostmove = self.nPostmove.value()
-        nAvg = self.nAvg.value()
+        timeConstant = self.lia.getTimeConstant()
+        estimatedStageMovement = 0.2
+        estimatedLockinVoltageRead = 0.2
 
-        # The integers were easy, now the slightly trickier part;
-        # Decoding the time constant from the Tc drop down menu.
-        textTc = self.ddTc.currentText()
-        multiplier, unit = textTc.split(' ')
-        if unit == 's':
-            Tc = float(multiplier)
-        elif unit == 'ms':
-            Tc = float(multiplier) * 1e-3
+        totalTime = numberOfSteps * (estimatedStageMovement + nPostmove*timeConstant + estimatedLockinVoltageRead)
 
-        self.post_move_wait_time = Tc * (1 + nPostmove)
-
-        if DEMO_MODE:
-            time = ((self.post_move_wait_time * nAvg)+ 0.025) * numberOfSteps #0.025 is a correction value.
-        else:
-            time = ((self.post_move_wait_time * nAvg) + (nStepsize / 5000)) * numberOfSteps #5 is the velocity of stage.
-            #TODO: 120.0 here is the velocity of stage. Just pull it from stage class.
-
-        return time
+        return totalTime
 
     def interruptable_sleep(self, wait_time):
         i = 0
