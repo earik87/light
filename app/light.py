@@ -97,6 +97,7 @@ class LightUIWindow(QMainWindow):
         self.btnStop.clicked.connect(self.btnStop_clicked)
         self.btnGoto.clicked.connect(self.btnGoto_clicked)
         self.btnUpdate.clicked.connect(self.btnUpdate_clicked)
+        self.getSensButton.clicked.connect(self.getSensButton_clicked)
         self.cbSaveall.stateChanged.connect(self.update_savestate)
 
 
@@ -161,6 +162,10 @@ class LightUIWindow(QMainWindow):
         self.stage.move(self.nPosition.value())
         self.update_statusbar('Goto value reached')
 
+    def getSensButton_clicked(self):
+        sens = self.lia.getSensitivity()
+        self.sensitivityOnUI.setText(str(sens))
+        self.update_statusbar('Sensitivity value on Lockin is: ' + str(sens))
 
     def btnUpdate_clicked(self):
         self.update_statusbar('Setting TimeConstant in Lockin.')

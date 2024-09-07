@@ -59,11 +59,9 @@ class SR830Demo(LockinAmplifierBaseClass):
         print('DEMO SR830: sensitivity is set to ' + str(self.sensitivity))
 
     def getTimeConstant(self):
-        print('DEMO SR830: time constant is ' + str(self.timeConstant) + ' second.')
         return self.timeConstant
 
     def getSensitivity(self):
-        print('DEMO SR830: sensitivity is ' + str(self.sensitivity))
         return self.sensitivity
 
 
@@ -113,7 +111,6 @@ class SR830(LockinAmplifierBaseClass):
             raise ConnectionError("Instrument not connected.")
         
         time_constant = self.instrument.time_constant
-        print('Real SR830: time constant is ' + str(time_constant) + ' second.')
         return time_constant
 
     def getSensitivity(self):
@@ -121,5 +118,4 @@ class SR830(LockinAmplifierBaseClass):
             raise ConnectionError("Instrument not connected.")
         
         sensitivity = self.instrument.sensitivity
-        print('Real SR830: sensitivity is ' + str(sensitivity))
         return sensitivity

@@ -106,6 +106,13 @@
          </property>
         </widget>
        </item>
+       <item row="1" column="6">
+        <widget class="QPushButton" name="getSensButton">
+         <property name="text">
+          <string>Get Sensitivity</string>
+         </property>
+        </widget>
+       </item>
        <item row="2" column="4">
         <widget class="QLabel" name="label_10">
          <property name="text">
