@@ -11,12 +11,28 @@ from matplotlib.figure import Figure
 import matplotlib
 import matplotlib.pyplot as plt
 from instruments.lockinAmplifier.sr830 import SR830Demo, SR830
-from instruments.nidaq.nidaq import NIDAQ, NIDAQDemo
 from instruments.thorlabsStage.lts150m import ThorlabsStageControllerDemo, ThorlabsStageController
 
-# If you do not use demo, then comment this line.
 DEMO_MODE = True
+
 THORLABS_STAGE_SERIAL_NO = "45283704"
+LIA_PORT = "ASRL5::INSTR"
+LIA_BAUDRATE = 9600
+
+
+time_constants = {
+    '100 s': 100.0,
+    '30 s': 30.0,
+    '10 s': 10.0,
+    '3 s': 3.0,
+    '1 s': 1.0,
+    '300 ms': 0.3,   # 300 milliseconds = 0.3 seconds
+    '100 ms': 0.1,   # 100 milliseconds = 0.1 seconds
+    '30 ms': 0.03,   # 50 milliseconds = 0.05 seconds
+    '10 ms': 0.01,   # 10 milliseconds = 0.01 seconds
+    '3 ms': 0.003,   # 1 millisecond = 0.001 seconds
+    '1 ms': 0.001,   # 1 millisecond = 0.001 seconds
+}
 
 
 class LightUIWindow(QMainWindow):
@@ -33,19 +49,17 @@ class LightUIWindow(QMainWindow):
 
     def initialize_instruments(self):
         if DEMO_MODE:
-            self.nidaq = NIDAQDemo()
-            self.stage = ThorlabsStageControllerDemo("45283704")
+            self.lia = SR830Demo()
+            self.stage = ThorlabsStageControllerDemo(THORLABS_STAGE_SERIAL_NO)
         else:
-            self.nidaq = NIDAQ()
-            self.stage = ThorlabsStageController("45283704")
+            self.lia = SR830()
+            self.stage = ThorlabsStageController(THORLABS_STAGE_SERIAL_NO)
 
-        #SR830 is never set up (for now), so it is always in demo mode.
-        self.lia = SR830Demo() 
-        self.lia.openConnection('ASRL::COM1::INSTR', 19200)
-        time.sleep(0.25)
+        self.lia.openConnection(LIA_PORT, LIA_BAUDRATE)
+        self.lia.setTimeConstant(0.1)
+        self.sensitivityOnUI.setText(str(self.lia.getSensitivity()))
         self.stage.openConnection()
         self.stage.home()
-
 
     def initialize_ui_components(self):  
         self.set_ui_buttons_to_default_values()
@@ -54,8 +68,8 @@ class LightUIWindow(QMainWindow):
 
 
     def set_ui_buttons_to_default_values(self):
-        self.ddSens.setCurrentIndex(18)
-        self.ddTc.setCurrentIndex(7)
+        # self.ddSens.setCurrentIndex(18)
+        self.ddTc.setCurrentIndex(5)
         self.StopRunFlag = False
         self.IsHomedFlag = False
         self.SaveAllFlag = False
@@ -83,6 +97,7 @@ class LightUIWindow(QMainWindow):
         self.btnStop.clicked.connect(self.btnStop_clicked)
         self.btnGoto.clicked.connect(self.btnGoto_clicked)
         self.btnUpdate.clicked.connect(self.btnUpdate_clicked)
+        self.getSensButton.clicked.connect(self.getSensButton_clicked)
         self.cbSaveall.stateChanged.connect(self.update_savestate)
 
 
@@ -101,19 +116,26 @@ class LightUIWindow(QMainWindow):
         self.SaveOnStop = False
 
         self.generate_plot()
-        # update step point
-        self.PresentPosition = self.nStart.value()
-        # goto start of scan range
-        self.stage.move(self.PresentPosition)
 
+        # goto start of scan range
+        self.stage.move(self.nStart.value())
+
+        post_move_wait_time = self.lia.getTimeConstant() * (1 + self.nPostmove.value())
+ 
         # wait for stage controller to arrive.
-        #TODO: this part is not correct. Fix it!!!
         for i in range(length_of_scan):
 
             # Check for stop flag
             if self.StopRunFlag == True:
                 break
 
+            # Execute move start
+            self.PresentPosition = self.nStart.value() + (i * self.nStepsize.value())
+            self.stage.move(self.PresentPosition)
+            
+            # Execute post move wait
+            self.interruptable_sleep(post_move_wait_time)
+            
             # Measure data
             voltageValue = self.measureVoltage()
 
@@ -121,15 +143,6 @@ class LightUIWindow(QMainWindow):
             self.dataX = np.append(self.dataX, self.PresentPosition)
             self.dataY = np.append(self.dataY, voltageValue)
             self.dataStep = np.append(self.dataStep, self.PresentPosition)
-
-            # Increment the PresentPosition controller variable
-            self.PresentPosition = self.PresentPosition + self.nStepsize.value()
-
-            # Execute move start
-            self.stage.move(self.PresentPosition)
-
-            # Execute post move wait
-            self.interruptable_sleep(self.post_move_wait_time)
 
             # Update plot
             self.update_plot()
@@ -149,35 +162,41 @@ class LightUIWindow(QMainWindow):
         self.stage.move(self.nPosition.value())
         self.update_statusbar('Goto value reached')
 
+    def getSensButton_clicked(self):
+        sens = self.lia.getSensitivity()
+        self.sensitivityOnUI.setText(str(sens))
+        self.update_statusbar('Sensitivity value on Lockin is: ' + str(sens))
 
     def btnUpdate_clicked(self):
-        self.update_statusbar('Updating Lockin')
-        # Update sensitivity
-        selected_sens = self.ddSens.currentIndex()
-        # print('Sensitivity: '+str(selected_sens))
-        self.lia.setSensitivity(selected_sens)
-        # Update filter Tcs
-        selected_tc = 10-self.ddTc.currentIndex()
-        # print('Time constant: '+str(selected_tc))
+        self.update_statusbar('Setting TimeConstant in Lockin.')
+        selected_text = self.ddTc.currentText()
+
+        if selected_text in time_constants:
+            selected_tc = time_constants[selected_text]
+        else:
+            raise ValueError(f"Unexpected time constant value: {selected_text}")
+
+        # Set the time constant
         self.lia.setTimeConstant(selected_tc)
+        newTimeConstant= self.lia.getTimeConstant()
+        self.update_statusbar("Time constant is set in Lockin to " + str(newTimeConstant) + " seconds.")
 
 
     def measureVoltage(self):
         dataY = []
         for i in range(int(self.nAvg.value())):
-            single_measurement = self.nidaq.measure() #nidaq read
-            #single_measurement = self.lia.measure() #SR830 read
+            single_measurement = self.lia.measure() #SR830 read
             dataY.append(single_measurement)
 
         return (np.mean(dataY))
 
 
     def update_statusbar(self, new_update):
-        self.statusBar.setText('Status: '+new_update)
+        self.statusBar.setText('Status: '+ new_update)
         estimated_scan_time = self.estimate_scan_time()
         m, s = divmod(estimated_scan_time, 60)
         h, m = divmod(m, 60)
-        self.lblEstduration.setText("%dhrs, %02dmins, %02dsecs" % (h, m, s))
+        self.estimatedTime.setText("%dhrs, %02dmins, %02dsecs" % (h, m, s))
 
 
     def update_savestate(self):
@@ -192,28 +211,15 @@ class LightUIWindow(QMainWindow):
         nStart = self.nStart.value()
         nStop = self.nStop.value()
         nStepsize = self.nStepsize.value()
-        numberOfSteps = (nStop-nStart)/nStepsize
+        numberOfSteps = ((nStop-nStart)/nStepsize) + 1
         nPostmove = self.nPostmove.value()
-        nAvg = self.nAvg.value()
+        timeConstant = self.lia.getTimeConstant()
+        estimatedStageMovement = 0.2
+        estimatedLockinVoltageRead = 0.2
 
-        # The integers were easy, now the slightly trickier part;
-        # Decoding the time constant from the Tc drop down menu.
-        textTc = self.ddTc.currentText()
-        multiplier, unit = textTc.split(' ')
-        if unit == 's':
-            Tc = float(multiplier)
-        elif unit == 'ms':
-            Tc = float(multiplier) * 1e-3
+        totalTime = numberOfSteps * (estimatedStageMovement + nPostmove*timeConstant + estimatedLockinVoltageRead)
 
-        self.post_move_wait_time = Tc * (1 + nPostmove)
-
-        if DEMO_MODE:
-            time = ((self.post_move_wait_time * nAvg)+ 0.025) * numberOfSteps #0.025 is a correction value.
-        else:
-            time = ((self.post_move_wait_time * nAvg) + (nStepsize / 5000)) * numberOfSteps #5 is the velocity of stage.
-            #TODO: 120.0 here is the velocity of stage. Just pull it from stage class.
-
-        return time
+        return totalTime
 
     def interruptable_sleep(self, wait_time):
         i = 0
@@ -236,12 +242,24 @@ class LightUIWindow(QMainWindow):
             os.makedirs(working_directory)
 
         datetime_string = time.strftime('%Y%m%d-%H-%M-%S')
-        fname_string = working_directory + datetime_string + prefix_string + '.csv'
+        
+        # File for the main data
+        data_fname = working_directory + datetime_string + prefix_string + '_data.csv'
+        
+        # File for the parameters
+        params_fname = working_directory + datetime_string + prefix_string + '_params.csv'
 
         if self.SaveAllFlag:
-            print('Saving file to ' + fname_string)
-            pd.DataFrame(np.array([self.dataX, self.dataY]).T,
-                         columns=['stagePos', 'voltage']).to_csv(fname_string, index=False)
+            # Save the main data
+            print('Saving data to ' + data_fname)
+            df = pd.DataFrame(np.array([self.dataX, self.dataY]).T, columns=['stagePos', 'voltage'])
+            df.to_csv(data_fname, index=False)
+            
+            # Save the parameters in a separate file
+            print('Saving parameters to ' + params_fname)
+            with open(params_fname, 'w') as f:
+                f.write('stageStart, stageStop, stageStepSize, timeConstant, sensitivity, postStepPause, sampleAverage\n')
+                f.write(f"{self.nStart.value()}, {self.nStop.value()}, {self.nStepsize.value()}, {self.lia.getTimeConstant()}, {self.lia.getSensitivity()}, {self.nPostmove.value()}, {self.nAvg.value()}\n")
 
 
     # Define plotting and plot update functions

@@ -3,7 +3,9 @@ import numpy as np
 from time import sleep
 from abc import ABC, abstractmethod
 from pymeasure.instruments.srs import SR830 as RealSR830
+from pymeasure.instruments.resources import list_resources
 import pyvisa
+from pyvisa.constants import StopBits, Parity
 
 class LockinAmplifierBaseClass(ABC):
     @abstractmethod
@@ -50,17 +52,17 @@ class SR830Demo(LockinAmplifierBaseClass):
 
     def setTimeConstant(self, timeConstant):
         self.timeConstant = timeConstant
-        print('DEMO SR830: time constant is set to '+ str(self.timeConstant))
+        print('DEMO SR830: time constant is set to '+ str(self.timeConstant) + ' second.')
 
     def setSensitivity(self, sensitivity):
         self.sensitivity = sensitivity
         print('DEMO SR830: sensitivity is set to ' + str(self.sensitivity))
 
     def getTimeConstant(self):
-        print('DEMO SR830: time constant is set to ' + str(self.timeConstant))
+        return self.timeConstant
 
     def getSensitivity(self):
-        print('DEMO SR830: sensitivity is set to ' + str(self.sensitivity))
+        return self.sensitivity
 
 
 class SR830(LockinAmplifierBaseClass):
@@ -70,10 +72,18 @@ class SR830(LockinAmplifierBaseClass):
     def openConnection(self, port, baudrate):
         # Initialize visa resource manager
         rm = pyvisa.ResourceManager()
-        # Open connection to the SR830 using USB to RS232
-        self.instrument = RealSR830(rm.open_resource(port, baud_rate=baudrate))
-        print('Real SR830 is connected')
+        print(rm.list_resources())
+        #To understand how this code works, read docs carefully!!!
+        #https://pyvisa.readthedocs.io/en/latest/introduction/communication.html#making-sure-the-instrument-understand-the-command
+        my_instrument = rm.open_resource('ASRL4::INSTR')
+        my_instrument.read_termination = '\r' 
+        my_instrument.write_termination = '\n' 
+        self.instrument = RealSR830(my_instrument)
 
+        print(my_instrument.query('*IDN?'))
+        print("Time constant is", self.instrument.time_constant)
+        print("Sensitivity is", self.instrument.sensitivity)
+       
     def measure(self) -> float:
         if self.instrument is None:
             raise ConnectionError("Instrument not connected.")
@@ -87,7 +97,7 @@ class SR830(LockinAmplifierBaseClass):
             raise ConnectionError("Instrument not connected.")
         
         self.instrument.time_constant = timeConstant
-        print('Real SR830: time constant is set to ' + str(timeConstant))
+        print('Real SR830: time constant is set to ' + str(timeConstant) + ' second.')
 
     def setSensitivity(self, sensitivity):
         if self.instrument is None:
@@ -101,7 +111,6 @@ class SR830(LockinAmplifierBaseClass):
             raise ConnectionError("Instrument not connected.")
         
         time_constant = self.instrument.time_constant
-        print('Real SR830: time constant is ' + str(time_constant))
         return time_constant
 
     def getSensitivity(self):
@@ -109,5 +118,4 @@ class SR830(LockinAmplifierBaseClass):
             raise ConnectionError("Instrument not connected.")
         
         sensitivity = self.instrument.sensitivity
-        print('Real SR830: sensitivity is ' + str(sensitivity))
         return sensitivity
